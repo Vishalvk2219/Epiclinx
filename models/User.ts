@@ -30,6 +30,7 @@ export interface IUser extends Document {
     accountUsername?: string
   }
   payment?: {
+    stripeCheckoutSessionId?: string
     creditCardNumber?: string
     cvv?: string
     expiryDate?: string
@@ -78,6 +79,7 @@ const userSchema = new Schema<IUser>(
     },
 
     payment: {
+      stripeCheckoutSessionId:{type:String, select:false},
       creditCardNumber: { type: String, select: false },
       cvv: { type: String, select: false },
       expiryDate: { type: String, select: false },

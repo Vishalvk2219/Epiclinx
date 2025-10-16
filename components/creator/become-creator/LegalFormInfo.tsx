@@ -35,9 +35,7 @@ interface LegalInfoFormProps {
   isSubmitting: boolean;
 }
 
-const stripePromise = loadStripe(
-  "pk_test_51QmqvrF1CAV35XBWhqVXIv6opDAs43J6kfSQsrNZ0atnR8ppbrlFQT1xwZbrBh6rHOmFUtvG7wbSKUO7JBkmirmB00tWC71nI9"
-);
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!);
 
 export function LegalInfoForm({
   formData,
