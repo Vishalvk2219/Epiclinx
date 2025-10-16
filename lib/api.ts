@@ -85,8 +85,8 @@ export async function apiUpload(formData: FormData): Promise<string> {
       throw new Error(error.message || "Upload failed");
     }
 
-    const data = await res.json();
-    return data.url;
+      const data = await res.json();
+      return data.data.url;
   } catch (e: any) {
     throw new Error(e?.message || "API error");
   }

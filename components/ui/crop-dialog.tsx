@@ -51,7 +51,7 @@ export default function CropDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-xl w-full">
         <DialogTitle>Crop Your Image</DialogTitle>
-        <div className="relative w-full h-[700px] bg-black">
+        <div className="relative w-full h-[400px] bg-black">
           <Cropper
             image={URL.createObjectURL(image)}
             crop={crop}

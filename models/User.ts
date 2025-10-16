@@ -72,7 +72,7 @@ const userSchema = new Schema<IUser>(
       companyName: { type: String },
       shopAddress: { type: String },
       website: { type: String },
-      description: { type: String },
+      description: { type: String }, 
       abn: { type: String },
       accountUsername: { type: String },
     },

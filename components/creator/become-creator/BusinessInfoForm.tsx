@@ -23,7 +23,7 @@ export const makeCreatorInfoSchema = (role: "creator" | "brand") => {
     email: z.string().email("Please enter a valid email address"),
     phone: z.string().min(10, "Please enter a valid phone number"),
     // username: z.string().min(3, "Must be at least 3 characters"),
-    displayName: z.string().min(3, "User Name must be at least 3 characters"),
+    // displayName: z.string().min(3, "User Name must be at least 3 characters"),
     instagram: z.string().url("Please enter a valid Instagram URL"),
     facebook: z.string().url("Please enter a valid Facebook URL"),
     tiktok: z.string().url("Please enter a valid TikTok URL"),
@@ -82,13 +82,14 @@ export default function BusinessInfoForm({
       lastName: formData?.lastName || "",
       email: formData?.email || "",
       phone: formData?.phone || "",
+      // username: formData?.username || "",
       location: formData?.location || "",
       instagram: formData?.instagram || "",
       facebook: formData?.facebook || "",
       tiktok: formData?.tiktok || "",
       otherSocial: formData?.otherSocial || "",
       profileImageUrl: formData?.profileImageUrl || "",
-      displayName: formData?.displayName || "",
+      // displayName: formData?.displayName || "",
       businessWebsite: formData?.businessWebsite || "",
       businessDescription: formData?.businessDescription || "",
       companyName: formData?.companyName || "",
@@ -128,7 +129,7 @@ export default function BusinessInfoForm({
       tiktok: formData?.tiktok || "",
       otherSocial: formData?.otherSocial || "",
       profileImageUrl: formData?.profileImageUrl || "",
-      displayName: formData?.displayName || "",
+      // displayName: formData?.displayName || "",
       businessWebsite: formData?.businessWebsite || "",
       businessDescription: formData?.businessDescription || "",
       companyName: formData?.companyName || "",
@@ -154,7 +155,7 @@ export default function BusinessInfoForm({
   };
 
   const categories = [
-    ..."Fashion",
+    "Fashion",
     "Fitness",
     "Wellness",
     "Health",
@@ -469,7 +470,7 @@ export default function BusinessInfoForm({
             </div>
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             {formData?.role == "creator" && (
               <Label
                 htmlFor="displayName"
@@ -498,7 +499,7 @@ export default function BusinessInfoForm({
                 {errors.displayName?.message}
               </p>
             )}
-          </div>
+          </div> */}
 
           {formData?.role == "creator" && (
             <div className="space-y-2">
