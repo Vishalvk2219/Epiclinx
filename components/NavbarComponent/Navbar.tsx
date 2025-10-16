@@ -94,7 +94,7 @@ const Navbar = () => {
         href={href}
         onClick={closeMenu}
         className={cn(
-          "text-[28px] md:text-[36px] font-medium relative group transition-all duration-200",
+          "text-lg md:text-xl font-medium relative group transition-all duration-200",
           isActive ? "text-[#00e0ca]" : "text-white hover:text-[#00e0ca]"
         )}
       >
@@ -178,18 +178,26 @@ const Navbar = () => {
                 </span>
               </div>
             ) : (
-              <Button
-                variant="default"
-                className="hidden md:flex rounded-full bg-[#00e0ca] hover:bg-[#00c4b1] text-black px-6 py-2 transition-all"
-                onClick={openSignIn}
-              >
-                Sign in
-              </Button>
+              <>
+              <div className="hidden md:flex lg:gap-8 md:gap-6 gap-4">
+                <NavMenuItem href="/">Home</NavMenuItem>
+                <NavMenuItem href="/brand">I’m a Brand</NavMenuItem>
+                <NavMenuItem href="/creator">I’m a Creator</NavMenuItem>
+                <NavMenuItem href="#">Messages</NavMenuItem>
+              </div>
+                <Button
+                  variant="default"
+                  className="hidden md:flex rounded-full bg-[#00e0ca] hover:bg-[#00c4b1] text-black px-6 py-2 transition-all"
+                  onClick={openSignIn}
+                >
+                  Sign in
+                </Button>
+              </>
             )}
 
             <Menu
               onClick={toggleMenu}
-              className="h-6 w-6 cursor-pointer text-white"
+              className="md:hidden h-6 w-6 cursor-pointer text-white"
             />
           </div>
         </nav>
@@ -226,9 +234,7 @@ const Navbar = () => {
 
             {user ? (
               <div className="flex flex-col md:flex-row items-start md:items-center w-full">
-                <NavMenuItem
-                  href={`/dashboard/${user.role || "creator"}`}
-                >
+                <NavMenuItem href={`/dashboard/${user.role || "creator"}`}>
                   My Account
                 </NavMenuItem>
 
