@@ -46,7 +46,8 @@ export async function POST(req:Request){
         )
 
         return NextResponse.json(
-            {checkoutSessionClientSecret:session.client_secret}
+            {success:true,data:{checkoutSessionClientSecret:session.client_secret}},
+            {status:200}
         )
     }catch(error:any){
         console.log("Error creating checkout session")

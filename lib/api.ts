@@ -66,7 +66,7 @@ export async function apiPost<T>(endpoint: string, body: any): Promise<T> {
     message: "Subscription already created"
     statusCode: 409
     */
-    return responseBody;
+    return responseBody.data;
   } catch (e: any) {
     throw new Error(e?.message || "API error");
   }

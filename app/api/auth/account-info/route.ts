@@ -5,32 +5,34 @@ import { NextResponse } from "next/server";
 
 export async function POST(req:Request){
     try{
-        connectDB();
-
+        connectDB()
         const body = await req.json();
-        const {email, stripeCheckoutSessionId, abn=""} = body;
+        const {email, username, password} = body;
 
-        const user = await User.findOneAndUpdate(
-            {email},
-            {abn,stripeCheckoutSessionId},
-            {new:true}
-        )
-
-        if (!user){
+        if(!email || !username || !password){
+            return NextResponse.json(
+                {success:false,error:"Invalid or Missing Details "},
+                {status:400}
+            )
+        }
+        const user = await User.findOne({email})
+        if(!user){
             return NextResponse.json(
                 {success:false,error:"User Not Found"},
                 {status:404}
             )
         }
+        user.username = username
+        user.password = password
+        await user.save()
 
         return NextResponse.json(
             {success:true,data:{user:user}},
             {status:200}
         )
     }catch(error:any){
-        console.log("Legal Info Error...",error.message)
         return NextResponse.json(
-            {success:false,error:error.message||"Internal Server Error"},
+            {success:false,error:error.message||"Internal server error"},
             {status:500}
         )
     }
