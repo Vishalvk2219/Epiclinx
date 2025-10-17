@@ -410,7 +410,15 @@ export function MultiStepForm() {
                       description:
                         "Prepearing Your Dashboard. You will be there soon",
                     });
-                    await new Promise((res) => setTimeout(res, 5000));
+                    try {
+                      await apiPost(
+                        "/send-mail/registration-mail",
+                        response.user
+                      );
+                    } catch (error: any) {
+                      console.log(error.message);
+                    }
+                    // await new Promise((res) => setTimeout(res, 3000));
                     router.push("/dashboard/" + formData.role);
                   } catch (err: any) {
                     toast({

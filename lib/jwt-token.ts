@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken"
 
-export function createJWTtoken(id:string|number,role:string,email:string,expire?:string){
+export function createJWTtoken(id:string|number,email:string,role:string,expire?:string){
 
     const payload = {
         id:id.toString(),

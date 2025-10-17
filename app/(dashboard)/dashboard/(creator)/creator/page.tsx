@@ -15,7 +15,7 @@ const Page = () => {
             </main>
 
             {/* Footer always at the bottom */}
-            <Footer />
+            {/* <Footer /> */}
         </div>
     )
 }

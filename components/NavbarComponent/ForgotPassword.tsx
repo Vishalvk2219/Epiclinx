@@ -44,14 +44,14 @@ const ForgotPasswordForm: React.FC<ForgotPasswordProps> = ({
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setLoading(true);
     try {
-      const response:{resetUrl: string, message: string} = await apiPost("/auth/forgot-password", data);
+      const response:{resetUrl?: string, message: string} = await apiPost("/auth/forgot-password", data);
       toast({
         variant: "info",
         title: "Email sent if account exists",
         description:response.message,
         
       });
-      console.log(response.resetUrl);
+      // console.log(response.resetUrl);
       onClose();
     } catch (error: any) {
       toast({
