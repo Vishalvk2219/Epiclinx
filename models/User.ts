@@ -5,8 +5,8 @@ import bcrypt from "bcryptjs";
 export interface IUser extends Document {
   role: string;
   profileImageUrl?: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   displayName?: string;
   username?: string;
   email: string;
@@ -22,8 +22,8 @@ export interface IUser extends Document {
   categories: string[];
   companyName?: string;
   shopAddress?: string;
-  website?: string;
-  description?: string;
+  businessWebsite?: string;
+  businessDescription?: string;
   abn?: string;
   stripeCheckoutSessionId?: string;
   creditCardNumber?: string;
@@ -43,8 +43,8 @@ const userSchema = new Schema<IUser>(
     role: { type: String, required: true, enum: ["brand", "creator"] },
 
     profileImageUrl: { type: String },
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
+    firstName: { type: String},
+    lastName: { type: String},
     displayName: { type: String },
     email: { type: String, required: true, unique: true, index: true },
     location: { type: String },
@@ -62,8 +62,8 @@ const userSchema = new Schema<IUser>(
 
     companyName: { type: String },
     shopAddress: { type: String },
-    website: { type: String },
-    description: { type: String },
+    businessWebsite: { type: String },
+    businessDescription: { type: String },
     abn: { type: String },
     username: { type: String },
     stripeCheckoutSessionId: { type: String, select: false },

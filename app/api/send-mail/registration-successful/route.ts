@@ -9,11 +9,11 @@ export async function POST(req: Request) {
     const mailOptions = {
       to: email,
       subject: "Registration Success on Epiclinx",
-      html: `<h1>Congratulation ${username} on becoming a ${role} on Epiclinx platform connecting brands and creators.</h1>`,
+      html: `<p>Congratulation ${username} on becoming a ${role} on Epiclinx platform connecting brands and creators.</p>`,
     };
 
     await sendMail(mailOptions);
-    return NextResponse.json({ success: true, data: {} }, { status: 200 });
+    return NextResponse.json({ success: true, data: {message:"Email Sent Successfully"} }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
       {

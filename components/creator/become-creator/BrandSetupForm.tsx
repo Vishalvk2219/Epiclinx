@@ -412,7 +412,7 @@ export function MultiStepForm() {
                     });
                     try {
                       await apiPost(
-                        "/send-mail/registration-mail",
+                        "/send-mail/registration-successful",
                         response.user
                       );
                     } catch (error: any) {
