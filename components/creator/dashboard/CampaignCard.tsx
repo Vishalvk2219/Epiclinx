@@ -10,8 +10,16 @@ import Image from "next/image";
 import { PiInstagramLogoFill } from "react-icons/pi";
 import { FaSackDollar } from "react-icons/fa6";
 
-export default function CampaignCard({ campaignId }: { campaignId: string }) {
-  const campaign = campaignsData.find((c) => c.id === campaignId);
+export default function CampaignCard({ campaignId }: { campaignId: string | null }) {
+  const [campaign,setCampaign] =  useState({});
+
+  useEffect(()=>{
+    const campaignData = async() =>{
+      
+    }
+   })
+
+  // const campaign = campaignsData.find((c) => c.id === campaignId);
   const [showMore, setShowMore] = useState(false);
 
   if (!campaign) return null;

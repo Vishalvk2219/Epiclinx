@@ -8,6 +8,7 @@ import CampaignCard from "../CampaignCard"
 import Image from "next/image"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { SingleOrderMessage } from "./SingleOrderMessage"
+import { useSearchParams } from "next/navigation"
 
 type JobStatus = "pending" | "submitted" | "in-progress" | "accepted" | "completed" | "declined"
 
@@ -18,14 +19,15 @@ export function SingleJob() {
     const [showMore, setShowMore] = useState(false)
 
     const toggleShowMore = () => setShowMore(prev => !prev)
-
+    const searchParams = useSearchParams()
+    const id = searchParams.get("id")
     return (
         <div className="flex flex-col gap-4">
             {/* Job Card */}
             <div className="bg-epiclinx-semiteal !text-black rounded-3xl overflow-hidden shadow-lg">
 
                 {/* Job Header */}
-                <CampaignCard campaignId={"AD204"} />
+                <CampaignCard campaignId={id} />
             </div>
 
             {/* Your Bid Section */}

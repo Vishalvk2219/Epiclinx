@@ -3,17 +3,41 @@
 import LinkMe from "@/components/NavbarComponent/LinkMe";
 import { Camera, Link, Pencil } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { FaFacebook, FaYoutube } from "react-icons/fa";
 import { PiInstagramLogoFill, PiTiktokLogoFill } from "react-icons/pi";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { apiFetch } from "@/lib/api";
 
 const ProfileView = ({ value = true }: { value: boolean }) => {
   const router = useRouter();
   const [signInOpen, setSignInOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user } = useAuthStore();
+  const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        if (pathname.startsWith("/profile")) {
+          const routeTo = pathname.split("/profile/creator/")
+          const res = await apiFetch(`/creator?id=${routeTo[1]}`);
+          console.log(res)
+          setUser(res.creator);
+        } else {
+          const currentUser = useAuthStore.getState().user;
+          setUser(currentUser);
+        }
+      } catch (error) {
+        console.log("Unable to fetch user...", error);
+      }finally{
+        setLoading(false)
+      }
+    };
+    fetchUser();
+  }, [pathname]);
 
   const openSignIn = () => {
     setMenuOpen(false); // Close menu if open
@@ -21,7 +45,8 @@ const ProfileView = ({ value = true }: { value: boolean }) => {
   };
 
   const closeSignIn = () => setSignInOpen(false);
-
+  if (loading) return <p>Loading...</p>;
+  if (!user) return <p>Failed to fetch data</p>;
   return (
     <div>
       <div className="relative h-[300px] rounded-3xl p-6 md:p-12 text-white bg-epiclinx-semiteal overflow-hidden">
@@ -71,9 +96,7 @@ const ProfileView = ({ value = true }: { value: boolean }) => {
             <div className="flex flex-col w-full gap-5 text-white">
               <div className="flex justify-between items-center">
                 <div className="flex flex-col md:flex-row md:items-center gap-2">
-                  <h3 className="text-2xl font-semibold">
-                    {user?.displayName}
-                  </h3>
+                  <h3 className="text-2xl font-semibold">{user?.username}</h3>
                   <div className="flex gap-3">
                     <a
                       href={user?.instagram || "https://www.instagram.com"}

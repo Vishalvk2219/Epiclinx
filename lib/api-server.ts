@@ -5,7 +5,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function apiFetchServer(endpoint: string, options?: RequestInit) {
   const cookieStore = await cookies();
-  const token = cookieStore.get("accessToken")?.value;
+  const token = cookieStore.get("authToken")?.value;
 
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
@@ -18,5 +18,6 @@ export async function apiFetchServer(endpoint: string, options?: RequestInit) {
 
   if (!res.ok) throw new Error("Unauthorized");
 
-  return res.json();
+  const data = await res.json();
+  return data.user
 }

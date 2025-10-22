@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { Briefcase, ChevronLeft, ChevronRight, DollarSign, Ellipsis, Gavel, Users } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, followerRanges } from "@/lib/utils"
 import { PiInstagramLogoFill, PiTiktokLogoFill } from "react-icons/pi"
 import { FaYoutube } from "react-icons/fa"
 import Link from "next/link"
 import { FaSackDollar } from "react-icons/fa6";
 import { JobsList } from "./JobList"
+import { apiFetch } from "@/lib/api"
 
 
 interface Job {
@@ -31,109 +32,142 @@ export function BrowseTabs({ show = true }: { show?: boolean }) {
   const [activeTab, setActiveTab] = useState<string>("Pending Applications")
   const [currentPage, setCurrentPage] = useState(1)
   const [activeSection, setActiveSection] = useState<"campaigns" | "submissions">("campaigns")
+  const [jobs,setJobs] = useState([])
+  const [loading,setLoading] = useState(false)
   const itemsPerPage = 5
 
   const tabs = ["Pending Applications", "Accepted Jobs", "Jobs In Progress", "Submitted Jobs", "Completed Jobs", "Declined Jobs"]
 
-  const jobs: Job[] = [
-    {
-      id: "AD201",
-      logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-      title: "H&M - Spring Launch - TikTok",
-      brand: "H&M",
-      description:
-        "We're launching our fresh Spring Collection and looking for creators to help us bring it to life! We need short, vibrant TikTok videos showing off your favorite Spring outfits – energy, personality, and creativity are a must.",
-      platforms: ["Instagram", "TikTok", "Youtube"],
-      requirements: "Nano (1,000 - 10,000 followers)",
-      payment: "$900",
-      status: "Pending Applications",
-      applicants: 0,
-      bids: 30,
-      icon: "FaSackDollar",
-      nano: true,
-    },
-    {
-      id: "AD312",
-      logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-      title: "H&M - Campaign - Instagram Reels",
-      brand: "H&M",
-      description:
-        "We're on the hunt for creators who live for simplicity, comfort, and style. Showcase your favorite looks from our Everyday Essentials line – how you wear them at home, at work, or out with friends. Keep it authentic, relatable, and real.",
-      platforms: ["Instagram", "TikTok", "Youtube"],
-      requirements: "Nano (1,000 - 10,000 followers)",
-      payment: "$2000",
-      status: "Accepted Jobs",
-      applicants: 30,
-      bids: 0,
-      icon: "gavel",
-      nano: true,
-    },
-    {
-      id: "AD202",
-      logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-      title: "H&M - Fresh Fits - TikTok Activation",
-      brand: "H&M",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-      platforms: ["Instagram", "TikTok", "Youtube"],
-      requirements: "Nano (1,000 - 10,000 followers)",
-      payment: "$650",
-      status: "Jobs In Progress",
-      applicants: 0,
-      bids: 30,
-      icon: "FaSackDollar",
-      nano: true,
-    },
-    {
-      id: "AD203",
-      logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-      title: "H&M - New Season Drop - Creator Collab",
-      brand: "H&M",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-      platforms: ["Instagram", "TikTok", "Youtube"],
-      requirements: "Nano (1,000 - 10,000 followers)",
-      payment: "$300",
-      status: "Submitted Jobs",
-      applicants: 30,
-      bids: 0,
-      icon: "gavel",
-      nano: true,
-    },
-    {
-      id: "AD204",
-      logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-      title: "H&M - TikTok Activation",
-      brand: "H&M",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-      platforms: ["Instagram", "TikTok", "Youtube"],
-      requirements: "Nano (1,000 - 10,000 followers)",
-      payment: "$1000",
-      status: "Completed Jobs",
-      applicants: 30,
-      bids: 0,
-      icon: "gavel",
-      nano: true,
-    },
-    {
-      id: "AD205",
-      logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-      title: "H&M - Summer Collection",
-      brand: "H&M",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-      platforms: ["Instagram", "TikTok", "Youtube"],
-      requirements: "Nano (1,000 - 10,000 followers)",
-      payment: "$800",
-      status: "Declined Jobs",
-      applicants: 15,
-      bids: 0,
-      icon: "gavel",
-      nano: true,
-    },
-  ]
-
+  // const jobs: Job[] = [
+  //   {
+  //     id: "AD201",
+  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
+  //     title: "H&M - Spring Launch - TikTok",
+  //     brand: "H&M",
+  //     description:
+  //       "We're launching our fresh Spring Collection and looking for creators to help us bring it to life! We need short, vibrant TikTok videos showing off your favorite Spring outfits – energy, personality, and creativity are a must.",
+  //     platforms: ["Instagram", "TikTok", "Youtube"],
+  //     requirements: "Nano (1,000 - 10,000 followers)",
+  //     payment: "$900",
+  //     status: "Pending Applications",
+  //     applicants: 0,
+  //     bids: 30,
+  //     icon: "FaSackDollar",
+  //     nano: true,
+  //   },
+  //   {
+  //     id: "AD312",
+  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
+  //     title: "H&M - Campaign - Instagram Reels",
+  //     brand: "H&M",
+  //     description:
+  //       "We're on the hunt for creators who live for simplicity, comfort, and style. Showcase your favorite looks from our Everyday Essentials line – how you wear them at home, at work, or out with friends. Keep it authentic, relatable, and real.",
+  //     platforms: ["Instagram", "TikTok", "Youtube"],
+  //     requirements: "Nano (1,000 - 10,000 followers)",
+  //     payment: "$2000",
+  //     status: "Accepted Jobs",
+  //     applicants: 30,
+  //     bids: 0,
+  //     icon: "gavel",
+  //     nano: true,
+  //   },
+  //   {
+  //     id: "AD202",
+  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
+  //     title: "H&M - Fresh Fits - TikTok Activation",
+  //     brand: "H&M",
+  //     description:
+  //       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+  //     platforms: ["Instagram", "TikTok", "Youtube"],
+  //     requirements: "Nano (1,000 - 10,000 followers)",
+  //     payment: "$650",
+  //     status: "Jobs In Progress",
+  //     applicants: 0,
+  //     bids: 30,
+  //     icon: "FaSackDollar",
+  //     nano: true,
+  //   },
+  //   {
+  //     id: "AD203",
+  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
+  //     title: "H&M - New Season Drop - Creator Collab",
+  //     brand: "H&M",
+  //     description:
+  //       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+  //     platforms: ["Instagram", "TikTok", "Youtube"],
+  //     requirements: "Nano (1,000 - 10,000 followers)",
+  //     payment: "$300",
+  //     status: "Submitted Jobs",
+  //     applicants: 30,
+  //     bids: 0,
+  //     icon: "gavel",
+  //     nano: true,
+  //   },
+  //   {
+  //     id: "AD204",
+  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
+  //     title: "H&M - TikTok Activation",
+  //     brand: "H&M",
+  //     description:
+  //       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+  //     platforms: ["Instagram", "TikTok", "Youtube"],
+  //     requirements: "Nano (1,000 - 10,000 followers)",
+  //     payment: "$1000",
+  //     status: "Completed Jobs",
+  //     applicants: 30,
+  //     bids: 0,
+  //     icon: "gavel",
+  //     nano: true,
+  //   },
+  //   {
+  //     id: "AD205",
+  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
+  //     title: "H&M - Summer Collection",
+  //     brand: "H&M",
+  //     description:
+  //       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+  //     platforms: ["Instagram", "TikTok", "Youtube"],
+  //     requirements: "Nano (1,000 - 10,000 followers)",
+  //     payment: "$800",
+  //     status: "Declined Jobs",
+  //     applicants: 15,
+  //     bids: 0,
+  //     icon: "gavel",
+  //     nano: true,
+  //   },
+  // ]
+  const getJobs = async () => {
+      try {
+        setLoading(true)
+        const companyJobs = await apiFetch("/jobs");
+        console.log(companyJobs)
+        const requiredFieldJobs = (companyJobs.jobs || []).map((jobs) => ({
+          id: jobs._id,
+          logo: jobs.companyId.profileImageUrl,
+          title: jobs.campaignName,
+          brand: jobs.companyId.companyName,
+          description: jobs.campaignBrief,
+          platforms: jobs.selectedPlatforms,
+          requirements: followerRanges[jobs.followerSize],
+          payment: jobs.budget,
+          collaborationType: jobs.collaborationType,
+          status: jobs.status,
+          applicants: jobs.applicants?.length || 0,
+          bids: jobs.bids?.length || 0,
+          icon: jobs.icon,
+        }));
+        setJobs(requiredFieldJobs);
+      } catch (error: any) {
+        console.log("Unable to load campaign or jobs");
+      }finally{
+        setLoading(false)
+      }
+    };
+  
+    useEffect(() => {
+      getJobs();
+    }, []);
+  console.log(jobs)
   const filteredJobs = activeTab === "All Jobs" ? jobs : jobs.filter((job) => job.status === activeTab)
 
   const totalPages = Math.ceil(filteredJobs.length / itemsPerPage)
@@ -145,6 +179,8 @@ export function BrowseTabs({ show = true }: { show?: boolean }) {
     }
   }
 
+  if (loading) return <p>Loading ...</p> 
+  if (!jobs) return <p>No jobs Available...</p>
   return (
     <div className="rounded-3xl overflow-hidden md:mt-20 mx-3">
       
@@ -526,7 +562,7 @@ export function BrowseTabs({ show = true }: { show?: boolean }) {
             </div>
           </>
         ) : (
-          <JobsList />
+          <JobsList jobs={jobs} />
         )
         }
       </div >

@@ -1,13 +1,19 @@
 // brand/PublicJobForm.tsx
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import Image from "next/image"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type React from "react";
+import { useRef, useState } from "react";
+import Image from "next/image";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   PlatformButtons,
   ContentTypeButtons,
@@ -15,22 +21,36 @@ import {
   HashtagsInput,
   ToggleSwitch,
   NavigationButtons,
-} from "./FormElements"
-import type { ContentType, OfferType, Platform, PublicFormData } from "@/lib/types"
-import Link from "next/link"
-import { Combobox } from "@/components/ui/country-dropdown"
-import { countries } from "@/lib/countries"
+} from "./FormElements";
+import type {
+  ContentType,
+  OfferType,
+  Platform,
+  PublicFormData,
+} from "@/lib/types";
+import Link from "next/link";
+import { Combobox } from "@/components/ui/country-dropdown";
+import { countries } from "@/lib/countries";
+import { Button } from "@/components/ui/button";
+import { apiUpload } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 interface PublicJobFormProps {
-  currentStep: number
-  nextStep: () => void
-  prevStep: () => void
-  handleSubmit: () => void
+  currentStep: number;
+  nextStep: () => void;
+  prevStep: () => void;
+  handleSubmit: (data: any) => void;
 }
 
-export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }: PublicJobFormProps) {
+export function PublicJobForm({
+  currentStep,
+  nextStep,
+  prevStep,
+  handleSubmit,
+}: PublicJobFormProps) {
   // Form data state
   const [formData, setFormData] = useState<PublicFormData>({
+    campaignImageUrl: "",
     campaignName: "",
     campaignBrief: "",
     campaignGoal: "",
@@ -47,203 +67,304 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
     agreeToTerms: false,
     contentApproval: true,
     allowShowcase: true,
-  })
+    taskType: "",
+    collaborationType: "",
+    paymentType: "",
+    followerSize: "",
+    totalPayment: "",
+  });
 
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
-  const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>([])
-  const [hashtags, setHashtags] = useState<string[]>([])
-  const [offerType, setOfferType] = useState<OfferType>("fixed")
-  const [otherContentType, setOtherContentType] = useState("")
-  const [selectedCountry, setSelectedCountry] = useState(undefined)
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>(
+    []
+  );
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [offerType, setOfferType] = useState<OfferType>("fixed");
+  const [otherContentType, setOtherContentType] = useState("");
+  // const [selectedCountry, setSelectedCountry] = useState(undefined);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   // Input change handlers
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleToggleChange = (name: string, checked: boolean) => {
-    setFormData((prev) => ({ ...prev, [name]: checked }))
-  }
+    setFormData((prev) => ({ ...prev, [name]: checked }));
+  };
 
+  const handleCountry = (val:string) =>{
+    setFormData((prev)=>({...prev,location:val}))
+  }
   const handlePlatformToggle = (platform: Platform) => {
     const newPlatforms = selectedPlatforms.includes(platform)
       ? selectedPlatforms.filter((p) => p !== platform)
-      : [...selectedPlatforms, platform]
+      : [...selectedPlatforms, platform];
 
-    setSelectedPlatforms(newPlatforms)
-  }
+    setSelectedPlatforms(newPlatforms);
+  };
 
   const handleContentTypeToggle = (type: ContentType) => {
     const newContentTypes = selectedContentTypes.includes(type)
       ? selectedContentTypes.filter((t) => t !== type)
-      : [...selectedContentTypes, type]
+      : [...selectedContentTypes, type];
 
-    setSelectedContentTypes(newContentTypes)
-  }
+    setSelectedContentTypes(newContentTypes);
+  };
 
   const addHashtag = (tag: string) => {
     if (tag && !hashtags.includes(tag)) {
-      const newHashtags = [...hashtags, tag]
-      setHashtags(newHashtags)
+      const newHashtags = [...hashtags, tag];
+      setHashtags(newHashtags);
     }
-  }
+  };
 
   const removeHashtag = (tag: string) => {
-    const newHashtags = hashtags.filter((t) => t !== tag)
-    setHashtags(newHashtags)
-  }
+    const newHashtags = hashtags.filter((t) => t !== tag);
+    setHashtags(newHashtags);
+  };
 
+  const handleCampaignUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // setSelectedImage(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setIsUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await apiUpload(formData);
+        setFormData((prev) => ({ ...prev, campaignImageUrl: response }));
+        toast({
+          variant: "success",
+          title: "Upload successful",
+        });
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Upload Failed",
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
   const onNextStep = async () => {
     // Validate based on current step
-    const fieldsToValidate = []
-    let isValid = true
+    const fieldsToValidate = [];
+    let isValid = true;
 
     if (currentStep === 1) {
       // Step 1 validation
       if (!formData.campaignName.trim()) {
-        document.getElementById("campaignName")?.classList.add("border-red-500")
-        document.getElementById("campaignName-error")?.classList.remove("hidden")
-        isValid = false
+        document
+          .getElementById("campaignName")
+          ?.classList.add("border-red-500");
+        document
+          .getElementById("campaignName-error")
+          ?.classList.remove("hidden");
+        isValid = false;
       } else {
-        document.getElementById("campaignName")?.classList.remove("border-red-500")
-        document.getElementById("campaignName-error")?.classList.add("hidden")
+        document
+          .getElementById("campaignName")
+          ?.classList.remove("border-red-500");
+        document.getElementById("campaignName-error")?.classList.add("hidden");
       }
 
       if (!formData.campaignBrief.trim()) {
-        document.getElementById("campaignBrief")?.classList.add("border-red-500")
-        document.getElementById("campaignBrief-error")?.classList.remove("hidden")
-        isValid = false
+        document
+          .getElementById("campaignBrief")
+          ?.classList.add("border-red-500");
+        document
+          .getElementById("campaignBrief-error")
+          ?.classList.remove("hidden");
+        isValid = false;
       } else {
-        document.getElementById("campaignBrief")?.classList.remove("border-red-500")
-        document.getElementById("campaignBrief-error")?.classList.add("hidden")
+        document
+          .getElementById("campaignBrief")
+          ?.classList.remove("border-red-500");
+        document.getElementById("campaignBrief-error")?.classList.add("hidden");
       }
 
       if (!formData.budget.trim()) {
-        document.getElementById("budget")?.classList.add("border-red-500")
-        document.getElementById("budget-error")?.classList.remove("hidden")
-        isValid = false
+        document.getElementById("budget")?.classList.add("border-red-500");
+        document.getElementById("budget-error")?.classList.remove("hidden");
+        isValid = false;
       } else if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(formData.budget)) {
-        document.getElementById("budget")?.classList.add("border-red-500")
-        document.getElementById("budget-error")?.classList.remove("hidden")
-        document.getElementById("budget-error-text").innerText = "Please enter a valid amount"
-        isValid = false
+        document.getElementById("budget")?.classList.add("border-red-500");
+        document.getElementById("budget-error")?.classList.remove("hidden");
+        document.getElementById("budget-error-text").innerText =
+          "Please enter a valid amount";
+        isValid = false;
       } else {
-        document.getElementById("budget")?.classList.remove("border-red-500")
-        document.getElementById("budget-error")?.classList.add("hidden")
+        document.getElementById("budget")?.classList.remove("border-red-500");
+        document.getElementById("budget-error")?.classList.add("hidden");
       }
 
       if (selectedPlatforms.length === 0) {
-        document.getElementById("platforms-error")?.classList.remove("hidden")
-        isValid = false
+        document.getElementById("platforms-error")?.classList.remove("hidden");
+        isValid = false;
       } else {
-        document.getElementById("platforms-error")?.classList.add("hidden")
+        document.getElementById("platforms-error")?.classList.add("hidden");
       }
 
       if (!formData.agreeToTerms) {
-        document.getElementById("terms-error")?.classList.remove("hidden")
-        isValid = false
+        document.getElementById("terms-error")?.classList.remove("hidden");
+        isValid = false;
       } else {
-        document.getElementById("terms-error")?.classList.add("hidden")
+        document.getElementById("terms-error")?.classList.add("hidden");
       }
     } else if (currentStep === 2) {
       // Step 2 validation
       if (!formData.campaignGoal.trim()) {
-        document.getElementById("campaignGoal")?.classList.add("border-red-500")
-        document.getElementById("campaignGoal-error")?.classList.remove("hidden")
-        isValid = false
+        document
+          .getElementById("campaignGoal")
+          ?.classList.add("border-red-500");
+        document
+          .getElementById("campaignGoal-error")
+          ?.classList.remove("hidden");
+        isValid = false;
       } else {
-        document.getElementById("campaignGoal")?.classList.remove("border-red-500")
-        document.getElementById("campaignGoal-error")?.classList.add("hidden")
+        document
+          .getElementById("campaignGoal")
+          ?.classList.remove("border-red-500");
+        document.getElementById("campaignGoal-error")?.classList.add("hidden");
       }
 
       if (!formData.requirements.trim()) {
-        document.getElementById("requirements")?.classList.add("border-red-500")
-        document.getElementById("requirements-error")?.classList.remove("hidden")
-        isValid = false
+        document
+          .getElementById("requirements")
+          ?.classList.add("border-red-500");
+        document
+          .getElementById("requirements-error")
+          ?.classList.remove("hidden");
+        isValid = false;
       } else {
-        document.getElementById("requirements")?.classList.remove("border-red-500")
-        document.getElementById("requirements-error")?.classList.add("hidden")
+        document
+          .getElementById("requirements")
+          ?.classList.remove("border-red-500");
+        document.getElementById("requirements-error")?.classList.add("hidden");
       }
 
       if (selectedContentTypes.length === 0) {
-        document.getElementById("contentTypes-error")?.classList.remove("hidden")
-        isValid = false
+        document
+          .getElementById("contentTypes-error")
+          ?.classList.remove("hidden");
+        isValid = false;
       } else {
-        document.getElementById("contentTypes-error")?.classList.add("hidden")
+        document.getElementById("contentTypes-error")?.classList.add("hidden");
       }
 
       if (!formData.captionGuidelines.trim()) {
-        document.getElementById("captionGuidelines")?.classList.add("border-red-500")
-        document.getElementById("captionGuidelines-error")?.classList.remove("hidden")
-        isValid = false
+        document
+          .getElementById("captionGuidelines")
+          ?.classList.add("border-red-500");
+        document
+          .getElementById("captionGuidelines-error")
+          ?.classList.remove("hidden");
+        isValid = false;
       } else {
-        document.getElementById("captionGuidelines")?.classList.remove("border-red-500")
-        document.getElementById("captionGuidelines-error")?.classList.add("hidden")
+        document
+          .getElementById("captionGuidelines")
+          ?.classList.remove("border-red-500");
+        document
+          .getElementById("captionGuidelines-error")
+          ?.classList.add("hidden");
       }
     } else if (currentStep === 3) {
       // Step 3 validation
-      const totalPaymentInput = document.getElementById("totalPayment") as HTMLInputElement
+      const totalPaymentInput = document.getElementById(
+        "totalPayment"
+      ) as HTMLInputElement;
       if (!totalPaymentInput?.value.trim()) {
-        totalPaymentInput?.classList.add("border-red-500")
-        document.getElementById("totalPayment-error")?.classList.remove("hidden")
-        document.getElementById("totalPayment-error-text").innerText = "Total payment is required"
-        isValid = false
+        totalPaymentInput?.classList.add("border-red-500");
+        document
+          .getElementById("totalPayment-error")
+          ?.classList.remove("hidden");
+        document.getElementById("totalPayment-error-text").innerText =
+          "Total payment is required";
+        isValid = false;
       } else if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(totalPaymentInput.value)) {
-        totalPaymentInput?.classList.add("border-red-500")
-        document.getElementById("totalPayment-error")?.classList.remove("hidden")
-        document.getElementById("totalPayment-error-text").innerText = "Please enter a valid amount"
-        isValid = false
+        totalPaymentInput?.classList.add("border-red-500");
+        document
+          .getElementById("totalPayment-error")
+          ?.classList.remove("hidden");
+        document.getElementById("totalPayment-error-text").innerText =
+          "Please enter a valid amount";
+        isValid = false;
       } else {
-        totalPaymentInput?.classList.remove("border-red-500")
-        document.getElementById("totalPayment-error")?.classList.add("hidden")
+        totalPaymentInput?.classList.remove("border-red-500");
+        document.getElementById("totalPayment-error")?.classList.add("hidden");
       }
     } else if (currentStep === 4) {
       // Step 4 validation
       if (!formData.tagUs.trim()) {
-        document.getElementById("tagUs")?.classList.add("border-red-500")
-        document.getElementById("tagUs-error")?.classList.remove("hidden")
-        isValid = false
+        document.getElementById("tagUs")?.classList.add("border-red-500");
+        document.getElementById("tagUs-error")?.classList.remove("hidden");
+        isValid = false;
       } else {
-        document.getElementById("tagUs")?.classList.remove("border-red-500")
-        document.getElementById("tagUs-error")?.classList.add("hidden")
+        document.getElementById("tagUs")?.classList.remove("border-red-500");
+        document.getElementById("tagUs-error")?.classList.add("hidden");
       }
 
       if (!formData.keepItAuthentic.trim()) {
-        document.getElementById("keepItAuthentic")?.classList.add("border-red-500")
-        document.getElementById("keepItAuthentic-error")?.classList.remove("hidden")
-        isValid = false
+        document
+          .getElementById("keepItAuthentic")
+          ?.classList.add("border-red-500");
+        document
+          .getElementById("keepItAuthentic-error")
+          ?.classList.remove("hidden");
+        isValid = false;
       } else {
-        document.getElementById("keepItAuthentic")?.classList.remove("border-red-500")
-        document.getElementById("keepItAuthentic-error")?.classList.add("hidden")
+        document
+          .getElementById("keepItAuthentic")
+          ?.classList.remove("border-red-500");
+        document
+          .getElementById("keepItAuthentic-error")
+          ?.classList.add("hidden");
       }
 
       if (!formData.dontDo.trim()) {
-        document.getElementById("dontDo")?.classList.add("border-red-500")
-        document.getElementById("dontDo-error")?.classList.remove("hidden")
-        isValid = false
+        document.getElementById("dontDo")?.classList.add("border-red-500");
+        document.getElementById("dontDo-error")?.classList.remove("hidden");
+        isValid = false;
       } else {
-        document.getElementById("dontDo")?.classList.remove("border-red-500")
-        document.getElementById("dontDo-error")?.classList.add("hidden")
+        document.getElementById("dontDo")?.classList.remove("border-red-500");
+        document.getElementById("dontDo-error")?.classList.add("hidden");
       }
     }
 
     if (isValid) {
       if (currentStep === 4) {
         // Submit the form
-        console.log("Form submitted", {
-          formData,
+        const data = {
+          ...formData,
           selectedPlatforms,
           selectedContentTypes,
           hashtags,
           offerType,
-        })
-        handleSubmit()
+        };
+        handleSubmit(data);
       } else {
-        nextStep()
+        nextStep();
       }
     }
-  }
+  };
 
   // Render the appropriate step based on currentStep
   return (
@@ -253,15 +374,46 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
         <div className="space-y-6 animate-fadeIn">
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center overflow-hidden">
-              <Image src="/placeholder.svg" alt="Company Logo" width={64} height={64} />
+              {previewUrl ? (
+                <Image
+                  src={previewUrl}
+                  alt="Uploaded Preview"
+                  width={64}
+                  height={64}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <Image
+                  src="/placeholder.svg"
+                  alt="Campaign Logo"
+                  width={64}
+                  height={64}
+                />
+              )}
             </div>
-            <div className="text-white">H&M</div>
-            <button className="back-button !w-40">Upload photo</button>
+            {/* <div className="text-white">{formData.campaignName || "Your Brand"}</div> */}
+            <button
+              className="back-button !w-40"
+              onClick={handleCampaignUpload}
+              disabled={isUploading}
+            >
+              {isUploading ? "Uploading..." : "Upload photo"}
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              style={{ display: "none" }}
+            />
           </div>
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="campaignName" className="block text-xs text-white mb-1">
+              <label
+                htmlFor="campaignName"
+                className="block text-xs text-white mb-1"
+              >
                 Campaign Name
               </label>
               <Input
@@ -274,17 +426,25 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
                 onChange={handleInputChange}
               />
               {/* Error message */}
-              <p id="campaignName-error" className="text-xs text-red-500 mt-1 hidden">
+              <p
+                id="campaignName-error"
+                className="text-xs text-red-500 mt-1 hidden"
+              >
                 Campaign name is required
               </p>
             </div>
 
             <div>
               <div className="flex justify-between mb-1">
-                <label htmlFor="campaignBrief" className="block text-xs text-white">
+                <label
+                  htmlFor="campaignBrief"
+                  className="block text-xs text-white"
+                >
                   Campaign Brief
                 </label>
-                <span className="text-xs text-gray-400">Max 150 Characters</span>
+                <span className="text-xs text-gray-400">
+                  Max 150 Characters
+                </span>
               </div>
               <Textarea
                 id="campaignBrief"
@@ -296,17 +456,27 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
                 onChange={handleInputChange}
               />
               {/* Error message */}
-              <p id="campaignBrief-error" className="text-xs text-red-500 mt-1 hidden">
+              <p
+                id="campaignBrief-error"
+                className="text-xs text-red-500 mt-1 hidden"
+              >
                 Campaign brief is required
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="contentType" className="block text-xs text-white mb-1">
-                  Content Type
+                <label
+                  htmlFor="TaskType"
+                  className="block text-xs text-white mb-1"
+                >
+                  Task Type
                 </label>
-                <Select onValueChange={(value) => {}}>
+                <Select
+                  onValueChange={(value) =>
+                    handleSelectChange("taskType", value)
+                  }
+                >
                   <SelectTrigger className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]">
                     <SelectValue placeholder="Select content type" />
                   </SelectTrigger>
@@ -318,10 +488,17 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
                 </Select>
               </div>
               <div>
-                <label htmlFor="paymentType" className="block text-xs text-white mb-1">
+                <label
+                  htmlFor="paymentType"
+                  className="block text-xs text-white mb-1"
+                >
                   Payment Type
                 </label>
-                <Select onValueChange={(value) => {}}>
+                <Select
+                  onValueChange={(value) =>
+                    handleSelectChange("paymentType", value)
+                  }
+                >
                   <SelectTrigger className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]">
                     <SelectValue placeholder="Select payment type" />
                   </SelectTrigger>
@@ -336,35 +513,61 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
 
             <div>
               <label className="block text-xs text-white mb-2">Platform</label>
-              <PlatformButtons selectedPlatforms={selectedPlatforms} onPlatformToggle={handlePlatformToggle} />
+              <PlatformButtons
+                selectedPlatforms={selectedPlatforms}
+                onPlatformToggle={handlePlatformToggle}
+              />
               {/* Error message */}
-              <p id="platforms-error" className="text-xs text-red-500 mt-1 hidden">
+              <p
+                id="platforms-error"
+                className="text-xs text-red-500 mt-1 hidden"
+              >
                 Please select at least one platform
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="followerSize" className="block text-xs text-white mb-1">
+                <label
+                  htmlFor="followerSize"
+                  className="block text-xs text-white mb-1"
+                >
                   Follower Size
                 </label>
-                <Select onValueChange={(value) => {}}>
+                <Select
+                  onValueChange={(value) =>
+                    handleSelectChange("followerSize", value)
+                  }
+                >
                   <SelectTrigger className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]">
                     <SelectValue placeholder="Select follower size" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="nano">Nano (1,000 - 10,000 followers)</SelectItem>
-                    <SelectItem value="micro">Micro (10,000 - 50,000 followers)</SelectItem>
-                    <SelectItem value="mid">Mid (50,000 - 500,000 followers)</SelectItem>
-                    <SelectItem value="macro">Macro (500,000+ followers)</SelectItem>
+                    <SelectItem value="nano">
+                      Nano (1,000 - 10,000 followers)
+                    </SelectItem>
+                    <SelectItem value="micro">
+                      Micro (10,000 - 50,000 followers)
+                    </SelectItem>
+                    <SelectItem value="mid">
+                      Mid (50,000 - 500,000 followers)
+                    </SelectItem>
+                    <SelectItem value="macro">
+                      Macro (500,000+ followers)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="relative">
-                <label htmlFor="budget" className="block text-xs text-white mb-1">
+                <label
+                  htmlFor="budget"
+                  className="block text-xs text-white mb-1"
+                >
                   Budget
                 </label>
-                <span className="absolute left-4 top-[30px] text-white text-sm pointer-events-none">$</span>
+                <span className="absolute left-4 top-[30px] text-white text-sm pointer-events-none">
+                  $
+                </span>
                 <Input
                   type="text"
                   id="budget"
@@ -375,26 +578,37 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
                   onChange={handleInputChange}
                 />
                 {/* Error message */}
-                <p id="budget-error" className="text-xs text-red-500 mt-1 hidden">
+                <p
+                  id="budget-error"
+                  className="text-xs text-red-500 mt-1 hidden"
+                >
                   <span id="budget-error-text">Budget is required</span>
                 </p>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs text-white mb-2">Offer System</label>
-              <OfferTypeButtons offerType={offerType} onOfferTypeChange={setOfferType} />
+              <label className="block text-xs text-white mb-2">
+                Offer System
+              </label>
+              <OfferTypeButtons
+                offerType={offerType}
+                onOfferTypeChange={setOfferType}
+              />
             </div>
 
             <div>
-              <label htmlFor="location" className="block text-xs text-white mb-1">
+              <label
+                htmlFor="location"
+                className="block text-xs text-white mb-1"
+              >
                 Location (Optional)
               </label>
               <Combobox
                 options={countries}
-                value={selectedCountry}
+                value={formData.location}
                 onChange={(val) => {
-                  setSelectedCountry(val)
+                  handleCountry(val);
                 }}
                 placeholder="Select country..."
               />
@@ -412,13 +626,19 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
                 id="agreeToTerms"
                 checked={formData.agreeToTerms}
                 onCheckedChange={(checked) => {
-                  setFormData((prev) => ({ ...prev, agreeToTerms: checked === true }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    agreeToTerms: checked === true,
+                  }));
                 }}
                 className="h-4 w-4 rounded border-gray-400 bg-transparent text-[#00CEC9] focus:ring-[#00CEC9]"
               />
               <label htmlFor="agreeToTerms" className="text-xs text-white">
                 Agree to EpicLinx{" "}
-                <Link href="/terms-and-conditions" className="text-epiclinx-teal">
+                <Link
+                  href="/terms-and-conditions"
+                  className="text-epiclinx-teal"
+                >
                   Terms & Conditions
                 </Link>
               </label>
@@ -435,7 +655,10 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
       {currentStep === 2 && (
         <div className="space-y-6 animate-fadeIn">
           <div>
-            <label htmlFor="campaignGoal" className="block text-xs text-white mb-1">
+            <label
+              htmlFor="campaignGoal"
+              className="block text-xs text-white mb-1"
+            >
               Campaign Goal
             </label>
             <Input
@@ -448,13 +671,19 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
               onChange={handleInputChange}
             />
             {/* Error message */}
-            <p id="campaignGoal-error" className="text-xs text-red-500 mt-1 hidden">
+            <p
+              id="campaignGoal-error"
+              className="text-xs text-red-500 mt-1 hidden"
+            >
               Campaign goal is required
             </p>
           </div>
 
           <div>
-            <label htmlFor="requirements" className="block text-xs text-white mb-1">
+            <label
+              htmlFor="requirements"
+              className="block text-xs text-white mb-1"
+            >
               What we need from you
             </label>
             <Input
@@ -467,19 +696,27 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
               onChange={handleInputChange}
             />
             {/* Error message */}
-            <p id="requirements-error" className="text-xs text-red-500 mt-1 hidden">
+            <p
+              id="requirements-error"
+              className="text-xs text-red-500 mt-1 hidden"
+            >
               Requirements are required
             </p>
           </div>
 
           <div>
-            <label className="block text-xs text-white mb-2">Type of content</label>
+            <label className="block text-xs text-white mb-2">
+              Type of content
+            </label>
             <ContentTypeButtons
               selectedContentTypes={selectedContentTypes}
               onContentTypeToggle={handleContentTypeToggle}
             />
             {/* Error message */}
-            <p id="contentTypes-error" className="text-xs text-red-500 mt-1 hidden">
+            <p
+              id="contentTypes-error"
+              className="text-xs text-red-500 mt-1 hidden"
+            >
               Please select at least one content type
             </p>
             {selectedContentTypes.includes("Other") && (
@@ -489,14 +726,17 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
                 className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9] mt-2"
                 value={otherContentType}
                 onChange={(e) => {
-                  setOtherContentType(e.target.value)
+                  setOtherContentType(e.target.value);
                 }}
               />
             )}
           </div>
 
           <div>
-            <label htmlFor="captionGuidelines" className="block text-xs text-white mb-1">
+            <label
+              htmlFor="captionGuidelines"
+              className="block text-xs text-white mb-1"
+            >
               Caption Guidelines
             </label>
             <Input
@@ -509,7 +749,10 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
               onChange={handleInputChange}
             />
             {/* Error message */}
-            <p id="captionGuidelines-error" className="text-xs text-red-500 mt-1 hidden">
+            <p
+              id="captionGuidelines-error"
+              className="text-xs text-red-500 mt-1 hidden"
+            >
               Caption guidelines are required
             </p>
           </div>
@@ -521,10 +764,17 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
         <div className="space-y-6 animate-fadeIn">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="collaborationType" className="block text-xs text-white mb-1">
+              <label
+                htmlFor="collaborationType"
+                className="block text-xs text-white mb-1"
+              >
                 Collaboration Type
               </label>
-              <Select onValueChange={(value) => {}}>
+              <Select
+                onValueChange={(value) =>
+                  handleSelectChange("collaborationType", value)
+                }
+              >
                 <SelectTrigger className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]">
                   <SelectValue placeholder="Select collaboration type" />
                 </SelectTrigger>
@@ -536,23 +786,36 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
               </Select>
             </div>
             <div className="relative">
-              <label htmlFor="totalPayment" className="block text-xs text-white mb-1">
+              <label
+                htmlFor="totalPayment"
+                className="block text-xs text-white mb-1"
+              >
                 Total Payment
               </label>
-              <span className="absolute left-4 top-[30px] text-white text-sm pointer-events-none">$</span>
+              <span className="absolute left-4 top-[30px] text-white text-sm pointer-events-none">
+                $
+              </span>
               <Input
                 type="text"
                 id="totalPayment"
+                name="totalPayment"
                 placeholder="Enter Total Payment"
                 className="w-full pl-8 rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+                value={formData.totalPayment}
+                onChange={handleInputChange}
               />
               {/* Error message */}
-              <p id="totalPayment-error" className="text-xs text-red-500 mt-1 hidden">
-                <span id="totalPayment-error-text">Total payment is required</span>
+              <p
+                id="totalPayment-error"
+                className="text-xs text-red-500 mt-1 hidden"
+              >
+                <span id="totalPayment-error-text">
+                  Total payment is required
+                </span>
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                This amount will remain private and is only visible to accepted creators. Held securely in escrow until
-                job completion.
+                This amount will remain private and is only visible to accepted
+                creators. Held securely in escrow until job completion.
               </p>
             </div>
           </div>
@@ -605,11 +868,18 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
             <label htmlFor="hashtags" className="block text-xs text-white mb-1">
               Required Hashtags
             </label>
-            <HashtagsInput hashtags={hashtags} onAddHashtag={addHashtag} onRemoveHashtag={removeHashtag} />
+            <HashtagsInput
+              hashtags={hashtags}
+              onAddHashtag={addHashtag}
+              onRemoveHashtag={removeHashtag}
+            />
           </div>
 
           <div>
-            <label htmlFor="keepItAuthentic" className="block text-xs text-white mb-1">
+            <label
+              htmlFor="keepItAuthentic"
+              className="block text-xs text-white mb-1"
+            >
               Keep it authentic
             </label>
             <Input
@@ -622,7 +892,10 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
               onChange={handleInputChange}
             />
             {/* Error message */}
-            <p id="keepItAuthentic-error" className="text-xs text-red-500 mt-1 hidden">
+            <p
+              id="keepItAuthentic-error"
+              className="text-xs text-red-500 mt-1 hidden"
+            >
               This field is required
             </p>
           </div>
@@ -655,5 +928,5 @@ export function PublicJobForm({ currentStep, nextStep, prevStep, handleSubmit }:
         nextLabel={currentStep === 4 ? "Submit" : "Continue"}
       />
     </div>
-  )
+  );
 }

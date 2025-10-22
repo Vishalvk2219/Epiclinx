@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     };
 
     await sendMail(mailOptions);
-    return NextResponse.json({ success: true, data: {message:"Email Sent Successfully"} }, { status: 200 });
+    return NextResponse.json({ success: true, message:"Email Sent Successfully" }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
       {

@@ -12,7 +12,7 @@ export const ClientAuthHydrator = ({ user }: { user: User | null }) => {
     const fetchUser = async () => {
       try {
         if (user) {
-          setUser(user); // Hydrate from SSR
+          setUser(user);// Hydrate from SSR
           return;
         }
         const newUser = await apiFetch("/user");

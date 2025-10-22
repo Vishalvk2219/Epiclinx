@@ -156,17 +156,22 @@ const Navbar = () => {
               Post a Job
             </Link>
             
-            <Link href={"/dashboard/creator/profile-management"}>
-              <Image
-                src={
-                  user?.profileImageUrl ||
-                  ""
-                }
+            <Link href={"/dashboard/brand/profile-management"}>
+              {user?.profileImageUrl ? (<Image
+                src={user?.profileImageUrl}
+                alt="Avatar"
+                width={10}
+                height={10}
+                className="object-cover h-10 w-10 rounded-full bg-white p-[1px]"
+              />) :(
+                <Image
+                src="/placeholder.svg"
                 alt="Avatar"
                 width={10}
                 height={10}
                 className="object-cover h-10 w-10 rounded-full bg-white p-[1px]"
               />
+              )}
             </Link>
 
             {/* Mobile menu icon */}

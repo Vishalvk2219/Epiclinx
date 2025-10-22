@@ -22,6 +22,7 @@ export default async function RootLayout({
   let user = null;
   try {
     user = await apiFetchServer("/user");
+    // console.log(user)
   } catch (error) {
     // fail silently or log if needed
   }

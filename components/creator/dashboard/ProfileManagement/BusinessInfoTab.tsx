@@ -17,7 +17,6 @@ export default function BusinessInfoTab() {
 
   const [formData, setFormData] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
-
   useEffect(() => {
     if (user) {
       setFormData(user);

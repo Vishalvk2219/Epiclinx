@@ -1,4 +1,5 @@
 export interface PublicFormData {
+    campaignImageUrl:string
     campaignName: string
     campaignBrief: string
     campaignGoal: string
@@ -15,9 +16,15 @@ export interface PublicFormData {
     agreeToTerms: boolean
     contentApproval: boolean
     allowShowcase: boolean
+    taskType:string
+    collaborationType:string
+    paymentType:string
+    followerSize:string
+    totalPayment:string
   }
   
   export interface DirectFormData {
+    campaignImageUrl:string
     campaignName: string
     campaignBrief: string
     campaignDuration: string
@@ -28,9 +35,11 @@ export interface PublicFormData {
     tagUs: string
     keepItAuthentic: string
     dontDo: string
+    totalPayment:number
     agreeToTerms: boolean
     contentApproval: boolean
     allowShowcase: boolean
+    collaborationType:string
   }
   
   export type Platform = "TikTok" | "Instagram" | "YouTube" | "Facebook" | "Snapchat" | "Twitch" | "Kick"

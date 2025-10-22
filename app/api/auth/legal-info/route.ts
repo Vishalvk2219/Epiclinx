@@ -24,7 +24,7 @@ export async function POST(req:Request){
         }
 
         return NextResponse.json(
-            {success:true,data:{user:user}},
+            {success:true, user},
             {status:200}
         )
     }catch(error:any){

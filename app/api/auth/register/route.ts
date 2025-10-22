@@ -2,13 +2,11 @@ import User from "@/models/User";
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/connect-db";
 
-export async function POST(req:Request){
+export async function POST(req:Request){ 
     try{
         connectDB()
         const body = await req.json();
-        console.log(body)
         const user = await User.findOne({email:body.email})
-        console.log(user)
         const auth = true // temporary condition should be replaced with a auth token
         if (user){
             if (auth){
@@ -16,7 +14,7 @@ export async function POST(req:Request){
                 await user.save()
 
                 return NextResponse.json(
-                    {success:true,data:{user:user}},
+                    {success:true, user},
                     {status:200}
                 )
             }
@@ -29,7 +27,7 @@ export async function POST(req:Request){
         await newUser.save()
 
         return NextResponse.json(
-            {success:true,data:newUser},
+            {success:true, data: newUser},
             {status:201}
         )
         

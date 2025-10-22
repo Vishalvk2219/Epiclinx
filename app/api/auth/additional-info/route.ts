@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
     const jwtToken = createJWTtoken(user._id, user.email, user.role);
     const response = NextResponse.json(
-      { success: true, data: { user: user } },
+      { success: true, user},
       { status: 200 }
     );
 

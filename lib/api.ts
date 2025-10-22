@@ -23,7 +23,8 @@ export async function apiFetch(endpoint: string, options?: RequestInit) {
       throw error;
     }
 
-    return res.json();
+    const data = await res.json();
+    return data
   } catch (e: any) {
     throw new Error(e?.message || "API error");
   }
@@ -66,7 +67,7 @@ export async function apiPost<T>(endpoint: string, body: any): Promise<T> {
     message: "Subscription already created"
     statusCode: 409
     */
-    return responseBody.data;
+    return responseBody;
   } catch (e: any) {
     throw new Error(e?.message || "API error");
   }
@@ -86,7 +87,7 @@ export async function apiUpload(formData: FormData): Promise<string> {
     }
 
       const data = await res.json();
-      return data.data.url;
+      return data.url;
   } catch (e: any) {
     throw new Error(e?.message || "API error");
   }

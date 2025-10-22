@@ -7,7 +7,7 @@ import Navbar from "./NavbarComponent/Navbar"
 export default function ConditionalNavbar() {
   const pathname = usePathname()
 
-  if (pathname.startsWith("/dashboard")) {
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/brand/post-a-job")) {
     return null
   }
 

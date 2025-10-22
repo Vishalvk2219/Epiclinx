@@ -46,7 +46,7 @@ export async function POST(req:Request){
         )
 
         return NextResponse.json(
-            {success:true,data:{checkoutSessionClientSecret:session.client_secret}},
+            {success:true, checkoutSessionClientSecret:session.client_secret},
             {status:200}
         )
     }catch(error:any){

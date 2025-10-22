@@ -24,7 +24,7 @@ export async function POST(req:Request){
         }
         await sendMail(mailOptions)
         return NextResponse.json(
-            {success:true,data:{message:"Password Reset Link Send Successfully"}},
+            {success:true, message:"Password Reset Link Send Successfully"},
             {status:200}
         )
 

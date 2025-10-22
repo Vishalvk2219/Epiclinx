@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     const uploadResult = result as any
 
     return NextResponse.json(
-      { success: true, data:{url: uploadResult.secure_url} },
+      { success: true, url: uploadResult.secure_url },
       { status: 200 }
     )
   } catch (error: any) {
