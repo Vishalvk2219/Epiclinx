@@ -265,7 +265,6 @@ export default function SpotlightedCreators({
   const allCreators = async () => {
     try {
       const data = await apiFetch("/creator");
-      console.log(".........",data)
       const requiredCreatorsField = (data?.creators || []).map(
         (creator: IUser) => ({
           id: creator._id || creator.id,
@@ -366,7 +365,7 @@ export default function SpotlightedCreators({
       return false;
     }
     // Location filter
-    if (filters.location && creator.location !== filters.location) {
+    if (filters.location && creator.location.toLowerCase() !== filters.location.toLowerCase()) {
       return false;
     }
 
@@ -491,7 +490,7 @@ export default function SpotlightedCreators({
             </span>
           ))}
         </div>
-
+        <div className="text-white px-3">{filteredCreators.length} creators found</div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {(pagination ? paginatedCreators : filteredCreators.slice(0, 7)).map(
             (creator) => (

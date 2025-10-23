@@ -185,7 +185,6 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
   // ]
 
   // Filter jobs based on search term and filters
-  console.log(jobs)
   const filteredJobs = jobs
     .filter((job) => {
       // First filter by tab
@@ -204,7 +203,7 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
       }
 
       // Filter by location
-      if (filters.location && job.location !== filters.location) {
+      if (filters.location && filters.location !== "" && job.location.toLowerCase() !== filters.location.toLowerCase()) {
         return false;
       }
 
@@ -219,8 +218,10 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
       // Filter by platform
       if (
         !filters.platforms.includes("All") &&
-        !job.platforms.some(
-          (p) => filters.platforms.map((fp) => fp.toLowerCase()).includes(p.toLowerCase())
+        !job.platforms.some((p) =>
+          filters.platforms
+            .map((fp) => fp.toLowerCase())
+            .includes(p.toLowerCase())
         )
       ) {
         return false;
@@ -250,7 +251,15 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
           Number.parseInt(a.payment.replace(/[^0-9]/g, "")) -
           Number.parseInt(b.payment.replace(/[^0-9]/g, ""))
         );
+      } else if (filters.sort === "Deadline") {
+        const dateA = new Date(a.deadline).getTime();
+        const dateB = new Date(b.deadline).getTime();
+
+        const safeDateA = isNaN(dateA) ? Infinity : dateA;
+        const safeDateB = isNaN(dateB) ? Infinity : dateB;
+        return safeDateA - safeDateB;
       }
+
       return 0;
     });
 
@@ -350,7 +359,9 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
                     </div>
 
                     {/* Row 2: Title */}
-                    <Link href={`/dashboard/creator/apply-for-job?id=${job.id}`}>
+                    <Link
+                      href={`/dashboard/creator/apply-for-job?id=${job.id}`}
+                    >
                       <h3 className="text-white font-medium">{job.title}</h3>
                     </Link>
 
@@ -440,7 +451,7 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
                           </button>
                         ) : (
                           <Link
-                            href="/dashboard/creator/apply-for-job"
+                            href={`/dashboard/creator/apply-for-job?id=${job.id}`}
                             className="bg-epiclinx-teal rounded-full px-4 py-2 text-sm text-black text-xs hover:bg-epiclinx-teal/90"
                           >
                             Apply for Job
@@ -482,7 +493,9 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex max-md:flex-col gap-2">
-                          <Link href={`/dashboard/creator/apply-for-job?id=${job.id}`}>
+                          <Link
+                            href={`/dashboard/creator/apply-for-job?id=${job.id}`}
+                          >
                             <h3 className="text-white font-medium">
                               {job.title}
                             </h3>
@@ -580,7 +593,7 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
                               ) : null
                             ) : (
                               <Link
-                                href="/dashboard/creator/apply-for-job"
+                                href={`/dashboard/creator/apply-for-job?id=${job.id}`}
                                 className="bg-epiclinx-teal rounded-full px-4 py-2 text-sm text-black text-xs hover:bg-epiclinx-teal/90"
                               >
                                 Apply for Job

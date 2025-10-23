@@ -1,7 +1,16 @@
 "use client";
 
 import LinkMe from "@/components/NavbarComponent/LinkMe";
-import { Camera, Link, Pencil } from "lucide-react";
+import {
+  Camera,
+  Globe,
+  Link,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Star,
+} from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -22,9 +31,9 @@ const ProfileView = ({ value = true }: { value: boolean }) => {
     const fetchUser = async () => {
       try {
         if (pathname.startsWith("/profile")) {
-          const routeTo = pathname.split("/profile/creator/")
+          const routeTo = pathname.split("/profile/creator/");
           const res = await apiFetch(`/creator?id=${routeTo[1]}`);
-          console.log(res)
+          console.log(res);
           setUser(res.creator);
         } else {
           const currentUser = useAuthStore.getState().user;
@@ -32,8 +41,8 @@ const ProfileView = ({ value = true }: { value: boolean }) => {
         }
       } catch (error) {
         console.log("Unable to fetch user...", error);
-      }finally{
-        setLoading(false)
+      } finally {
+        setLoading(false);
       }
     };
     fetchUser();
@@ -44,6 +53,10 @@ const ProfileView = ({ value = true }: { value: boolean }) => {
     setSignInOpen(true);
   };
 
+  // function handleCoverImageUpload(){
+
+  // }
+
   const closeSignIn = () => setSignInOpen(false);
   if (loading) return <p>Loading...</p>;
   if (!user) return <p>Failed to fetch data</p>;
@@ -52,7 +65,10 @@ const ProfileView = ({ value = true }: { value: boolean }) => {
       <div className="relative h-[300px] rounded-3xl p-6 md:p-12 text-white bg-epiclinx-semiteal overflow-hidden">
         {/* Background Image */}
         <Image
-          src="https://plus.unsplash.com/premium_photo-1673177667569-e3321a8d8256?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8Y292ZXIlMjBwaG90b3xlbnwwfHwwfHx8MA%3D%3D"
+          src={
+            user.coverImage ||
+            "https://plus.unsplash.com/premium_photo-1673177667569-e3321a8d8256?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8Y292ZXIlMjBwaG90b3xlbnwwfHwwfHx8MA%3D%3D"
+          }
           alt="Cover Background"
           fill
           className="object-cover rounded-3xl"
@@ -62,7 +78,10 @@ const ProfileView = ({ value = true }: { value: boolean }) => {
         {/* Top-right buttons with icons */}
         {value && (
           <div className="absolute top-4 right-4 flex gap-2 z-10 max-md:flex max-md:flex-col max-md:items-end max-md:gap-2">
-            <button className="bg-black/50 text-white text-sm rounded-full px-3 py-1 flex items-center gap-2">
+            <button
+              // onClick={handleCoverImageUpload}
+              className="bg-black/50 text-white text-sm rounded-full px-3 py-1 flex items-center gap-2"
+            >
               <Camera className="w-4 h-4" />
               Change Cover Image
             </button>
@@ -139,6 +158,121 @@ const ProfileView = ({ value = true }: { value: boolean }) => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Creator Details Card */}
+      <div className="mt-6 bg-white/10 rounded-3xl p-6 md:p-8 text-white">
+        <h3 className="text-xl font-semibold mb-6">About</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left Column */}
+          <div className="space-y-4">
+            {user?.location && (
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Location</p>
+                  <p className="text-base font-medium">{user.location}</p>
+                </div>
+              </div>
+            )}
+
+            {user?.followers && (
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Followers</p>
+                  <p className="text-base font-medium">
+                    {user.followers.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {user?.email && (
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Email</p>
+                  <p className="text-base font-medium break-all">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-4">
+            {user?.phone && (
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Phone</p>
+                  <p className="text-base font-medium">{user.phone}</p>
+                </div>
+              </div>
+            )}
+
+            {user?.businessWebsite && (
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Website</p>
+                  <a
+                    href={user.businessWebsite}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-base font-medium text-epiclinx-teal hover:underline break-all"
+                  >
+                    {user.businessWebsite}
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {user?.categories && user.categories.length > 0 && (
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Star className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400 mb-2">Categories</p>
+                  <div className="flex flex-wrap gap-2">
+                    {user.categories.map((category, index) => (
+                      <span
+                        key={index}
+                        className="bg-epiclinx-semiteal text-black text-xs font-medium px-3 py-1 rounded-full"
+                      >
+                        {category}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Business Description - Full Width if exists */}
+        {user?.businessDescription && (
+          <div className="mt-6 pt-6 border-t border-white/10">
+            <p className="text-sm text-gray-400 mb-2">About</p>
+            <p className="text-base leading-relaxed">
+              {user.businessDescription}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Stats Section */}

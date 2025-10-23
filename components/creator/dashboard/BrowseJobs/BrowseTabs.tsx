@@ -155,6 +155,10 @@ export function BrowseTabs({ show = true }: { show?: boolean }) {
           applicants: jobs.applicants?.length || 0,
           bids: jobs.bids?.length || 0,
           icon: jobs.icon,
+          niche:jobs.niche || [],
+          location:jobs.location || "",
+          deliverables:jobs.selectedContentTypes || [],
+          deadline:jobs.postDeadline,
         }));
         setJobs(requiredFieldJobs);
       } catch (error: any) {
@@ -167,7 +171,7 @@ export function BrowseTabs({ show = true }: { show?: boolean }) {
     useEffect(() => {
       getJobs();
     }, []);
-  console.log(jobs)
+
   const filteredJobs = activeTab === "All Jobs" ? jobs : jobs.filter((job) => job.status === activeTab)
 
   const totalPages = Math.ceil(filteredJobs.length / itemsPerPage)

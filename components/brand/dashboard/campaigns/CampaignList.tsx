@@ -165,7 +165,7 @@ const CampaignList = () => {
   const getJobs = async () => {
     try {
       const companyJobs = await apiFetch("/jobs");
-      const requiredFieldJobs = (companyJobs.allJobs || []).map((jobs) => ({
+      const requiredFieldJobs = (companyJobs.jobs || []).map((jobs) => ({
         id: jobs._id,
         logo: jobs.companyId.profileImageUrl,
         title: jobs.campaignName,
@@ -177,7 +177,9 @@ const CampaignList = () => {
         status: jobs.status,
         applicants: jobs.applicants?.length || 0,
         bids: jobs.bids?.length || 0,
+        collaborationType: jobs.collaborationType,
         icon: jobs.icon,
+        contentType: jobs.contentType,
       }));
       setJobs(requiredFieldJobs);
     } catch (error: any) {
@@ -344,20 +346,18 @@ const CampaignList = () => {
               {/* Row 6: UGC */}
               <div className="flex items-center gap-1 text-white text-xs font-light">
                 <Briefcase className="w-4 h-4" />
-                UGC
+                {job.contentType}
               </div>
 
               {/* Row 7: Paid */}
               <div className="flex items-center gap-1 text-white text-sm font-light">
                 <DollarSign className="w-4 h-4" />
-                Paid
+                {job.collaborationType}
               </div>
 
               {/* Row 8: Bids/Applicants */}
               <div className="text-white text-sm">
-                {job.applicants > 0
-                  ? `${job.applicants} Applicants`
-                  : `${job.bids} Bids`}
+                {job.bids > 0 ? `${job.bids} Bids` : "0 Bids"}
               </div>
             </div>
 
@@ -512,19 +512,17 @@ const CampaignList = () => {
 
                   <div className="flex items-center gap-1 text-white text-xs font-light">
                     <Briefcase className="w-5 h-5" />
-                    UGC
+                    {job.contentType}
                   </div>
 
                   <div className="flex items-center gap-1 text-white text-sm font-light">
                     <DollarSign className="w-5 h-5" />
-                    Paid
+                    {job.collaborationType}
                   </div>
 
                   <div className="ml-auto text-white text-xs font-light">
                     <div className="text-white text-sm">
-                      {job.applicants > 0
-                        ? `${job.applicants} Applicants`
-                        : `${job.bids} Applicants`}
+                      {job.bids > 0 ? `${job.bids} Bids` : "0 Bids"}
                     </div>
                   </div>
                 </div>

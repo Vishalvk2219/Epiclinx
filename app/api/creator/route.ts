@@ -16,7 +16,7 @@ export async function GET(req: Request) {
         { status: 200 }
       );
     } else {
-      console.log(id)
+      
       const creator = await User.findById(id);
 
       if (!creator) {

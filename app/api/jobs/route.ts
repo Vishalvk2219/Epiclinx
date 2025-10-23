@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     } else if (decoded.role === "creator") {
       jobs = await JobModel.find({}).populate(
         "companyId",
-        "profileImageUrl companyName"
+        "profileImageUrl companyName selectedContentTypes"
       );
     } else {
       return NextResponse.json(
@@ -35,10 +35,9 @@ export async function GET(req: Request) {
     if (!jobs || jobs.length === 0) {
       return NextResponse.json(
         { success: true, jobs: [], message: "No jobs found" },
-        { status: 200 }
+        { status: 404 }
       );
     }
-   
     return NextResponse.json({ success: true, jobs }, { status: 200 });
 
   } catch (error: any) {

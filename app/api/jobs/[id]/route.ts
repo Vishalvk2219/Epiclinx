@@ -1,4 +1,5 @@
 import { verifyToken } from "@/lib/verify-token";
+import BidModel from "@/models/Bids";
 import JobModel from "@/models/Job";
 import { NextResponse } from "next/server";
 
@@ -7,7 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(
@@ -36,7 +37,12 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ success: true, job }, { status: 200 });
+    let bid;
+    const creatorBid = await BidModel.findOne({creatorId:decodedJWT.id,jobId:id})
+    if (creatorBid){
+      bid = creatorBid ? creatorBid : null;
+    }
+    return NextResponse.json({ success: true, job, bid}, { status: 200 });
   } catch (error: any) {
     console.error("Error fetching job:", error);
     return NextResponse.json(

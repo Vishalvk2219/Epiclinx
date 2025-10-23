@@ -8,6 +8,7 @@ export interface IUser extends Document {
   firstName?: string;
   lastName?: string;
   displayName?: string;
+  coverImage?: string;
   username?: string;
   email: string;
   location?: string;
@@ -20,6 +21,7 @@ export interface IUser extends Document {
   enableNotifications: boolean;
   agreeToTerms: boolean;
   categories: string[];
+  followers:number;
   companyName?: string;
   shopAddress?: string;
   businessWebsite?: string;
@@ -48,6 +50,7 @@ const userSchema = new Schema<IUser>(
     displayName: { type: String },
     email: { type: String, required: true, unique: true, index: true },
     location: { type: String },
+    coverImage: {type: String},
 
     instagram: { type: String },
     facebook: { type: String },
@@ -59,6 +62,7 @@ const userSchema = new Schema<IUser>(
     enableNotifications: { type: Boolean, default: false },
     agreeToTerms: { type: Boolean, default: false },
     categories: { type: [String], default: [] },
+    followers: {type: Number},
 
     companyName: { type: String },
     shopAddress: { type: String },

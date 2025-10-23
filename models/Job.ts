@@ -33,6 +33,8 @@ export interface IJob extends Document {
   applicants:Types.ObjectId[];
   bids:Types.ObjectId[];
   icon:string;
+  niche:string[];
+  contentType:string;
 }
 
 const JobSchema = new Schema<IJob>(
@@ -64,11 +66,13 @@ const JobSchema = new Schema<IJob>(
     hashtags: { type: [String], required: false, default: [] },
     offerType: { type: String },
     jobType: {type:String, required:true},
+    niche :{type:[String]},
     companyId:{type:Schema.Types.ObjectId, ref:"User", required:true},
     status:{type:String, enum:["Pending Applications","Accepted Jobs","Jobs In Progress","Submitted Jobs","Completed Jobs","Declined Jobs"],default:"Pending Applications"},
     applicants:[{type:Schema.Types.ObjectId,ref:"User",default:[]}],
     bids:[{type:Schema.Types.ObjectId,ref:"Bids",default:[]}],
-    icon:{type:String,default:'gavel'}
+    icon:{type:String,default:'gavel'},
+    contentType:{type:String, default:"UGC"}
   },
   { timestamps: true }
 );

@@ -26,7 +26,6 @@ export default function CampaignCard() {
         setLoading(true);
         const data = await apiFetch(`/jobs/${id}`);
         const job = data.job;
-        console.log(job);
         const requiredFieldJobs = {
           id: job._id,
           logo: job.companyId.profileImageUrl,
@@ -44,7 +43,7 @@ export default function CampaignCard() {
           bids: job.bids?.length || 0,
           icon: job.icon,
         };
-        console.log(requiredFieldJobs);
+   
         setJob(requiredFieldJobs);
       } catch (error: any) {
         console.log("Error:", error);
@@ -56,8 +55,7 @@ export default function CampaignCard() {
   }, [id]);
 
   if (loading) return <p>Loading... </p>;
-  if (!job) return <p>Job not found...</p>;
-  console.log(job);
+  if (!job) return null;
   return (
     <div className="bg-epiclinx-semiteal text-black rounded-3xl p-6 relative overflow-hidden">
       <div className="flex flex-col md:flex-row gap-4 items-start">
