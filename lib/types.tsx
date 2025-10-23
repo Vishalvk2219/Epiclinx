@@ -40,6 +40,7 @@ export interface PublicFormData {
     contentApproval: boolean
     allowShowcase: boolean
     collaborationType:string
+    niche:[string]
   }
   
   export type Platform = "TikTok" | "Instagram" | "YouTube" | "Facebook" | "Snapchat" | "Twitch" | "Kick"

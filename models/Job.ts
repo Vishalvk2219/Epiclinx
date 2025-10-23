@@ -57,7 +57,7 @@ const JobSchema = new Schema<IJob>(
     contentApproval: { type: Boolean, required: true, default: true },
     allowShowcase: { type: Boolean, required: true, default: true },
     taskType: { type: String, required: false },
-    collaborationType: { type: String, required: true },
+    collaborationType: { type: String},
     paymentType: { type: String, required: false },
     followerSize: { type: String, required: false },
     totalPayment: { type: Schema.Types.Mixed, required: true },

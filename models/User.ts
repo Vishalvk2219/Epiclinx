@@ -38,6 +38,7 @@ export interface IUser extends Document {
   password: string;
   onboardingToken: string;
   OnboardingStatus: number;
+  rating:number;
 }
 
 const userSchema = new Schema<IUser>(
@@ -82,6 +83,7 @@ const userSchema = new Schema<IUser>(
 
     password: { type: String, select: false },
     OnboardingStatus: { type: Number, default: 1 },
+    rating:{type:Number,default:0}
   },
   { timestamps: true }
 );

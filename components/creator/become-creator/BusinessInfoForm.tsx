@@ -36,6 +36,7 @@ export const makeCreatorInfoSchema = (role: "creator" | "brand") => {
       lastName: z.string().min(1, "Last name is required"),
       location: z.string().min(1, "Location is required"),
       otherSocial: z.string().min(1, "Other Social is required"),
+      followers: z.number().min(1000,"Minimum follower count should be 1000")
     });
   }
 
@@ -134,6 +135,7 @@ export default function BusinessInfoForm({
       businessDescription: formData?.businessDescription || "",
       companyName: formData?.companyName || "",
       shopAddress: formData?.shopAddress || "",
+      followers: formData?.followers || ""
     },
   });
 
@@ -662,7 +664,23 @@ export default function BusinessInfoForm({
               )}
             </div>
           )}
-
+          {formData.role === "creator" && (
+            <div>
+              <Label
+                htmlFor="otherSocial"
+                className="text-gray-100 font-light text-xs"
+              >
+                Enter No. Of Followers
+              </Label>
+              <Input
+                id="followers"
+                placeholder="Enter follower count"
+                {...register("followers")}
+                onChange={handleInputChange}
+                className="border-gray-400 text-white bg-transparent rounded-full"
+              />
+            </div>
+          )}
           <div className="space-y-4">
             <Label className="text-gray-100 font-light text-xs">
               Type of content you create

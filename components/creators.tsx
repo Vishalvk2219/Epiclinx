@@ -270,8 +270,8 @@ export default function SpotlightedCreators({
           id: creator._id || creator.id,
           name: `${creator.firstName} ${creator.lastName}`,
           image: creator.profileImageUrl,
-          rating: 5.0,
-          followers: 5000,
+          rating: creator.rating || "",
+          followers: creator.followers || 1000,
           location: creator.location,
           categories: creator.categories || [],
           platforms: [
@@ -490,7 +490,7 @@ export default function SpotlightedCreators({
             </span>
           ))}
         </div>
-        <div className="text-white px-3">{filteredCreators.length} creators found</div>
+         <span className="text-white/90 text-xs">{`${filteredCreators.length} creators found`}</span>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {(pagination ? paginatedCreators : filteredCreators.slice(0, 7)).map(
             (creator) => (

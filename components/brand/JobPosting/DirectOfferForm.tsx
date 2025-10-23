@@ -1,5 +1,3 @@
-//brand/DirectOfferForm.tsx
-
 "use client";
 
 import React, { useRef } from "react";
@@ -26,6 +24,7 @@ import {
 import { DatePicker } from "@/components/DatePicker";
 import { toast } from "@/hooks/use-toast";
 import { apiUpload } from "@/lib/api";
+import { contentTypeCategories } from "@/lib/utils";
 
 interface DirectOfferFormProps {
   currentStep: number;
@@ -42,12 +41,12 @@ export function DirectOfferForm({
 }: DirectOfferFormProps) {
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [date, setDate] = React.useState<Date>();
-   const fileInputRef = useRef<HTMLInputElement | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
-   
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   const [formData, setFormData] = useState<DirectFormData>({
-    campaignImageUrl:"",
+    campaignImageUrl: "",
     campaignName: "",
     campaignBrief: "",
     campaignDuration: "",
@@ -58,14 +57,40 @@ export function DirectOfferForm({
     tagUs: "",
     keepItAuthentic: "",
     dontDo: "",
-    totalPayment: 0,
+    totalPayment: "",
     agreeToTerms: false,
     contentApproval: true,
     allowShowcase: true,
     collaborationType: "",
   });
+  const [selectedNiche, setSelectedNiche] = useState<string[]>([]);
+
+  const toggleNiche = (category: string) => {
+    setSelectedNiche((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
 
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+
+  // Helper functions to parse campaignDuration
+  const getCampaignStartDate = () => {
+    if (formData.campaignDuration) {
+      const dates = formData.campaignDuration.split(" - ");
+      return dates[0] ? new Date(dates[0]) : undefined;
+    }
+    return undefined;
+  };
+
+  const getCampaignEndDate = () => {
+    if (formData.campaignDuration) {
+      const dates = formData.campaignDuration.split(" - ");
+      return dates[1] ? new Date(dates[1]) : undefined;
+    }
+    return undefined;
+  };
 
   const handleSelectChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -78,6 +103,40 @@ export function DirectOfferForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleCampaignDateChange = (
+    field: "start" | "end",
+    date: Date | undefined
+  ) => {
+    const startDate = field === "start" ? date : getCampaignStartDate();
+    const endDate = field === "end" ? date : getCampaignEndDate();
+
+    if (startDate && endDate) {
+      const startStr = startDate.toISOString().split("T")[0];
+      const endStr = endDate.toISOString().split("T")[0];
+      setFormData((prev) => ({
+        ...prev,
+        campaignDuration: `${startStr} - ${endStr}`,
+      }));
+    } else if (startDate) {
+      const startStr = startDate.toISOString().split("T")[0];
+      setFormData((prev) => ({
+        ...prev,
+        campaignDuration: `${startStr} - `,
+      }));
+    } else if (endDate) {
+      const endStr = endDate.toISOString().split("T")[0];
+      setFormData((prev) => ({
+        ...prev,
+        campaignDuration: ` - ${endStr}`,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        campaignDuration: "",
+      }));
+    }
+  };
+
   const handlePlatformToggle = (platform: Platform) => {
     const newPlatforms = selectedPlatforms.includes(platform)
       ? selectedPlatforms.filter((p) => p !== platform)
@@ -87,11 +146,9 @@ export function DirectOfferForm({
   };
 
   const onNextStep = () => {
-    // Validate based on current step
     let isValid = true;
 
     if (currentStep === 1) {
-      // Step 1 validation
       if (!formData.campaignName.trim()) {
         document
           .getElementById("direct-campaignName")
@@ -137,21 +194,26 @@ export function DirectOfferForm({
           ?.classList.add("hidden");
       }
 
-      if (!formData.campaignDuration.trim()) {
-        document
-          .getElementById("direct-campaignDuration")
-          ?.classList.add("border-red-500");
+      if (
+        !formData.campaignDuration.trim() ||
+        !formData.campaignDuration.includes(" - ")
+      ) {
         document
           .getElementById("direct-campaignDuration-error")
           ?.classList.remove("hidden");
         isValid = false;
       } else {
-        document
-          .getElementById("direct-campaignDuration")
-          ?.classList.remove("border-red-500");
-        document
-          .getElementById("direct-campaignDuration-error")
-          ?.classList.add("hidden");
+        const dates = formData.campaignDuration.split(" - ");
+        if (!dates[0] || !dates[1]) {
+          document
+            .getElementById("direct-campaignDuration-error")
+            ?.classList.remove("hidden");
+          isValid = false;
+        } else {
+          document
+            .getElementById("direct-campaignDuration-error")
+            ?.classList.add("hidden");
+        }
       }
 
       if (!formData.postDeadline.trim()) {
@@ -180,7 +242,6 @@ export function DirectOfferForm({
         document.getElementById("direct-terms-error")?.classList.add("hidden");
       }
     } else if (currentStep === 2) {
-      // Step 2 validation
       if (!formData.campaignGoal.trim()) {
         document
           .getElementById("direct-campaignGoal")
@@ -232,7 +293,6 @@ export function DirectOfferForm({
           ?.classList.add("hidden");
       }
     } else if (currentStep === 3) {
-      // Step 3 validation
       const totalPaymentInput = document.getElementById(
         "direct-totalPayment"
       ) as HTMLInputElement;
@@ -259,7 +319,6 @@ export function DirectOfferForm({
           ?.classList.add("hidden");
       }
     } else if (currentStep === 4) {
-      // Step 4 validation
       if (!formData.tagUs.trim()) {
         document
           .getElementById("direct-tagUs")
@@ -310,10 +369,10 @@ export function DirectOfferForm({
 
     if (isValid) {
       if (currentStep === 4) {
-        // Submit the form
         const data = {
           ...formData,
           selectedPlatforms,
+          niche:selectedNiche,
           hashtags,
         };
         handleSubmit(data);
@@ -344,7 +403,6 @@ export function DirectOfferForm({
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      // setSelectedImage(file);
       setPreviewUrl(URL.createObjectURL(file));
       setIsUploading(true);
       try {
@@ -369,7 +427,6 @@ export function DirectOfferForm({
 
   return (
     <div className="transition-all duration-300 ease-in-out">
-      {/* Step 1: Basic job information */}
       {currentStep === 1 && (
         <div className="space-y-6 animate-fadeIn">
           <div className="flex items-center gap-4 mb-6">
@@ -391,7 +448,6 @@ export function DirectOfferForm({
                 />
               )}
             </div>
-            {/* <div className="text-white">{formData.campaignName || "Your Brand"}</div> */}
             <button
               className="back-button !w-40"
               onClick={handleCampaignUpload}
@@ -424,7 +480,6 @@ export function DirectOfferForm({
               value={formData.campaignName}
               onChange={handleInputChange}
             />
-            {/* Error message */}
             <p
               id="direct-campaignName-error"
               className="text-xs text-red-500 mt-1 hidden"
@@ -452,7 +507,6 @@ export function DirectOfferForm({
               value={formData.campaignBrief}
               onChange={handleInputChange}
             />
-            {/* Error message */}
             <p
               id="direct-campaignBrief-error"
               className="text-xs text-red-500 mt-1 hidden"
@@ -460,14 +514,33 @@ export function DirectOfferForm({
               Campaign brief is required
             </p>
           </div>
-
+          <label className="block text-xs text-white">
+            Select Niche
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {contentTypeCategories.map((category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => {
+                  toggleNiche(category);
+                }}
+                className={`px-4 py-1 rounded-full text-sm ${
+                  selectedNiche.includes(category)
+                    ? "bg-epiclinx-teal text-black"
+                    : "bg-epiclinx-semiteal text-black hover:bg-[#00e5c9] hover:transition-all hover:duration-200"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
           <div>
             <label className="block text-xs text-white mb-2">Platform</label>
             <PlatformButtons
               selectedPlatforms={selectedPlatforms}
               onPlatformToggle={handlePlatformToggle}
             />
-            {/* Error message */}
             <p
               id="direct-platforms-error"
               className="text-xs text-red-500 mt-1 hidden"
@@ -477,34 +550,32 @@ export function DirectOfferForm({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <label
-                htmlFor="direct-campaignDuration"
-                className="block text-xs text-white mb-1"
-              >
-                Campaign Duration
-              </label>
-              <DatePicker
-                value={
-                  formData.campaignDuration
-                    ? new Date(formData.campaignDuration)
-                    : undefined
-                }
-                onChange={(date) =>
-                  handleInputChange({
-                    target: {
-                      name: "campaignDuration",
-                      value: date ? date.toISOString().split("T")[0] : "",
-                    },
-                  })
-                }
-              />
-              {/* Error message */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-white mb-1">
+                  Campaign Start Date
+                </label>
+                <DatePicker
+                  value={getCampaignStartDate()}
+                  onChange={(date) => handleCampaignDateChange("start", date)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-white mb-1">
+                  Campaign End Date
+                </label>
+                <DatePicker
+                  value={getCampaignEndDate()}
+                  onChange={(date) => handleCampaignDateChange("end", date)}
+                  minDate={getCampaignStartDate() || new Date()}
+                />
+              </div>
               <p
                 id="direct-campaignDuration-error"
                 className="text-xs text-red-500 mt-1 hidden"
               >
-                Campaign duration is required
+                Both campaign start and end dates are required
               </p>
             </div>
 
@@ -530,7 +601,6 @@ export function DirectOfferForm({
                   })
                 }
               />
-              {/* Error message */}
               <p
                 id="direct-postDeadline-error"
                 className="text-xs text-red-500 mt-1 hidden"
@@ -559,7 +629,6 @@ export function DirectOfferForm({
               </Link>
             </label>
           </div>
-          {/* Error message */}
           <p
             id="direct-terms-error"
             className="text-xs text-red-500 mt-1 hidden"
@@ -569,7 +638,6 @@ export function DirectOfferForm({
         </div>
       )}
 
-      {/* Step 2: What's this about? */}
       {currentStep === 2 && (
         <div className="space-y-6 animate-fadeIn">
           <div>
@@ -588,7 +656,6 @@ export function DirectOfferForm({
               value={formData.campaignGoal}
               onChange={handleInputChange}
             />
-            {/* Error message */}
             <p
               id="direct-campaignGoal-error"
               className="text-xs text-red-500 mt-1 hidden"
@@ -613,7 +680,6 @@ export function DirectOfferForm({
               value={formData.requirements}
               onChange={handleInputChange}
             />
-            {/* Error message */}
             <p
               id="direct-requirements-error"
               className="text-xs text-red-500 mt-1 hidden"
@@ -638,7 +704,6 @@ export function DirectOfferForm({
               value={formData.captionGuidelines}
               onChange={handleInputChange}
             />
-            {/* Error message */}
             <p
               id="direct-captionGuidelines-error"
               className="text-xs text-red-500 mt-1 hidden"
@@ -649,7 +714,6 @@ export function DirectOfferForm({
         </div>
       )}
 
-      {/* Step 3: Payment & deliverables */}
       {currentStep === 3 && (
         <div className="space-y-6 animate-fadeIn">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -686,7 +750,8 @@ export function DirectOfferForm({
                 $
               </span>
               <Input
-                type="text"
+                type="number"
+                min={0}
                 id="direct-totalPayment"
                 name="totalPayment"
                 placeholder="Enter Total Payment"
@@ -694,7 +759,6 @@ export function DirectOfferForm({
                 value={formData.totalPayment}
                 onChange={handleInputChange}
               />
-              {/* Error message */}
               <p
                 id="direct-totalPayment-error"
                 className="text-xs text-red-500 mt-1 hidden"
@@ -757,7 +821,6 @@ export function DirectOfferForm({
         </div>
       )}
 
-      {/* Step 4: Final touches */}
       {currentStep === 4 && (
         <div className="space-y-6 animate-fadeIn">
           <div>
@@ -773,7 +836,6 @@ export function DirectOfferForm({
               value={formData.tagUs}
               onChange={handleInputChange}
             />
-            {/* Error message */}
             <p
               id="direct-tagUs-error"
               className="text-xs text-red-500 mt-1 hidden"
@@ -809,7 +871,6 @@ export function DirectOfferForm({
               value={formData.keepItAuthentic}
               onChange={handleInputChange}
             />
-            {/* Error message */}
             <p
               id="direct-keepItAuthentic-error"
               className="text-xs text-red-500 mt-1 hidden"
@@ -831,7 +892,6 @@ export function DirectOfferForm({
               value={formData.dontDo}
               onChange={handleInputChange}
             />
-            {/* Error message */}
             <p
               id="direct-dontDo-error"
               className="text-xs text-red-500 mt-1 hidden"

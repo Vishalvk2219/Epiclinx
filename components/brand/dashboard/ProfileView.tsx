@@ -1,8 +1,9 @@
 "use client";
-import { Camera, Pencil } from "lucide-react";
+
+import { Camera, Pencil, Globe, MapPin } from "lucide-react";
 import Image from "next/image";
 import React from "react";
-import { FaYoutube } from "react-icons/fa";
+import { FaFacebookF, FaYoutube } from "react-icons/fa";
 import { PiInstagramLogoFill, PiTiktokLogoFill } from "react-icons/pi";
 import { useAuthStore } from "@/stores/useAuthStore";
 
@@ -10,78 +11,149 @@ const ProfileView = () => {
   const { user } = useAuthStore();
 
   return (
-    <div>
-      <div className="relative bg-epiclinx-semiteal rounded-3xl p-12 text-white">
-        {/* Top-right buttons */}
-        <div className="absolute top-4 right-4 flex gap-2">
-          <button className="bg-black/50 text-white text-sm flex items-center gap-1 rounded-full px-3 py-1">
-            <Camera className="w-4 h-4" />
-            <span>Change Cover Image</span>
+    <div className="w-full min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111] text-white rounded-3xl shadow-xl overflow-hidden">
+      {/* Cover Image Section */}
+      <div className="relative w-full h-60 md:h-80 bg-gray-800">
+        {user?.profileImageUrl ? (
+          <Image
+            src={user.coverImage ? user.coverImage : user.profileImageUrl}
+            alt="Cover Image"
+            fill
+            className="object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-400">
+            No Cover Image
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="absolute top-4 right-4 flex gap-3">
+          <button className="flex items-center gap-2 bg-black/50 hover:bg-black/70 text-sm font-medium px-3 py-2 rounded-full backdrop-blur-md transition">
+            <Camera size={16} /> Change Cover
           </button>
-          <a
-            href="/dashboard/brand/profile-management"
-            className="bg-black/50 text-white text-sm flex items-center gap-1 rounded-full px-3 py-1"
-          >
-            <Pencil className="w-4 h-4" />
-            <span>Edit profile</span>
+          <a 
+          href="/dashboard/brand/profile-management"
+          className="flex items-center gap-2 bg-[#00CEC9]/90 hover:bg-[#00CEC9] text-sm font-medium px-3 py-2 rounded-full transition">
+            <Pencil size={16} /> Edit Profile
           </a>
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="flex flex-col md:flex-row items-start md:items-center md:gap-8">
-          {/* Left: Image */}
-          <div className="flex-shrink-0 mx-auto md:mx-0 mb-4 md:mb-0">
+      {/* Main Info Section */}
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-6 px-6 md:px-10 mt-[-4rem] relative z-10">
+        {/* Profile Image */}
+        <div className="relative w-36 h-36 rounded-full border-4 border-[#00CEC9] overflow-hidden bg-gray-900 shadow-lg">
+          {user?.profileImageUrl ? (
             <Image
-              src={user?.profileImageUrl || ""}
-              alt="Logo"
-              width={100}
-              height={100}
-              className="rounded-full object-cover bg-white p-2"
+              src={user.profileImageUrl}
+              alt="Profile"
+              fill
+              className="object-cover"
             />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+              No Image
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 text-center md:text-left">
+          <h1 className="text-3xl md:text-4xl font-bold md:mt-5">
+            {user?.companyName || "Company Name"}
+          </h1>
+
+          <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 mt-4 text-gray-400 text-sm">
+            {user?.shopAddress && (
+              <span className="flex items-center gap-1">
+                <MapPin size={14} /> {user.shopAddress}
+              </span>
+            )}
+            {user?.businessWebsite && (
+              <a
+                href={user.businessWebsite}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 hover:text-[#00CEC9] transition"
+              >
+                <Globe size={14} /> {user.businessWebsite}
+              </a>
+            )}
+            {user?.followers && (
+              <span className="flex items-center gap-1">
+                👥 {user.followers} Followers
+              </span>
+            )}
           </div>
 
-          {/* Right: Info */}
-          <div className="flex flex-col w-full gap-3 text-black">
-            {/* Name & Socials */}
-            <div className="flex flex-col md:flex-row md:items-center  gap-2">
-              <h3 className="text-2xl font-semibold">
-                {user?.companyName}
-              </h3>
-              <div className="flex gap-3">
-                <div className="h-8 w-8 bg-white rounded-full flex items-center justify-center">
-                  <PiInstagramLogoFill className="w-5 h-5 text-black/80" />
-                </div>
-                <div className="h-8 w-8 bg-white rounded-full flex items-center justify-center">
-                  <PiTiktokLogoFill className="w-5 h-5 text-black/80" />
-                </div>
-                <div className="h-8 w-8 bg-white rounded-full flex items-center justify-center">
-                  <FaYoutube className="w-5 h-5 text-black/80" />
-                </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <p className="text-sm max-w-2xl">
-              {user?.businessDescription}
-            </p>
+          {/* Social Links */}
+          <div className="flex justify-center md:justify-start gap-3 mt-4">
+            {user?.instagram && (
+              <a
+                href={user.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full bg-[#222] hover:bg-[#00CEC9]/20 transition"
+              >
+                <PiInstagramLogoFill size={20} />
+              </a>
+            )}
+            {user?.facebook && (
+              <a
+                href={user.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full bg-[#222] hover:bg-[#00CEC9]/20 transition"
+              >
+                <FaFacebookF size={18} />
+              </a>
+            )}
+            {user?.tiktok && (
+              <a
+                href={user.tiktok}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full bg-[#222] hover:bg-[#00CEC9]/20 transition"
+              >
+                <PiTiktokLogoFill size={20} />
+              </a>
+            )}
+            {user?.otherSocial && (
+              <a
+                href={user.otherSocial}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full bg-[#222] hover:bg-[#00CEC9]/20 transition"
+              >
+                <FaYoutube size={18} />
+              </a>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Stats Section */}
-      <div className="flex w-full max-md:flex-col justify-between mt-6 gap-4">
-        <div className="flex w-full justify-between max-md:flex-col max-md:items-start gap-3 items-center bg-white/10 rounded-3xl p-10 text-center text-white">
-          <p className="text-6xl font-bold">11</p>
-          <p className="text-md mt-1">Jobs posted</p>
-        </div>
-        <div className="flex w-full justify-between items-center max-md:flex-col max-md:items-start gap-3 bg-white/10 rounded-3xl p-10 text-center text-white">
-          <p className="text-6xl font-bold">32</p>
-          <p className="text-md mt-1">Jobs completed</p>
-        </div>
-        <div className="flex w-full justify-between items-center max-md:flex-col max-md:items-start gap-3 bg-white/10 rounded-3xl p-10 text-center text-white">
-          <p className="text-6xl font-bold">40</p>
-          <p className="text-md mt-1">Sales completed</p>
-        </div>
+      {/* Description Section */}
+      <div className="px-6 md:px-10 mt-8 mb-10">
+        <h2 className="text-xl font-semibold mb-3 text-[#00CEC9]">
+          About the Company
+        </h2>
+        <p className="text-gray-300 leading-relaxed">
+          {user?.businessDescription ||
+            "This company has not added a description yet."}
+        </p>
+
+        {user?.shopAddress && (
+          <p className="mt-4 text-gray-400 text-sm">
+            📍 <span className="font-medium">Address:</span> {user.shopAddress}
+          </p>
+        )}
+
+        {user?.abn && (
+          <p className="text-gray-400 text-sm mt-1">
+            💼 <span className="font-medium">ABN:</span> {user.abn}
+          </p>
+        )}
       </div>
     </div>
   );

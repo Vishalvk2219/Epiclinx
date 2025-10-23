@@ -34,6 +34,8 @@ import { countries } from "@/lib/countries";
 import { Button } from "@/components/ui/button";
 import { apiUpload } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
+import { DatePicker } from "@/components/DatePicker";
+import { contentTypeCategories } from "@/lib/utils";
 
 interface PublicJobFormProps {
   currentStep: number;
@@ -74,6 +76,15 @@ export function PublicJobForm({
     totalPayment: "",
   });
 
+  const [selectedNiche, setSelectedNiche] = useState<string[]>([]);
+
+  const toggleNiche = (category: string) => {
+    setSelectedNiche((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>(
     []
@@ -102,9 +113,9 @@ export function PublicJobForm({
     setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
-  const handleCountry = (val:string) =>{
-    setFormData((prev)=>({...prev,location:val}))
-  }
+  const handleCountry = (val: string) => {
+    setFormData((prev) => ({ ...prev, location: val }));
+  };
   const handlePlatformToggle = (platform: Platform) => {
     const newPlatforms = selectedPlatforms.includes(platform)
       ? selectedPlatforms.filter((p) => p !== platform)
@@ -357,6 +368,7 @@ export function PublicJobForm({
           selectedPlatforms,
           selectedContentTypes,
           hashtags,
+          niche:selectedNiche,
           offerType,
         };
         handleSubmit(data);
@@ -597,6 +609,36 @@ export function PublicJobForm({
               />
             </div>
 
+            <div className="relative">
+              <label
+                htmlFor="postDeadline"
+                className="block text-xs text-white mb-1"
+              >
+                Post Deadline
+              </label>
+              <DatePicker
+                value={
+                  formData.postDeadline
+                    ? new Date(formData.postDeadline)
+                    : undefined
+                }
+                onChange={(date) =>
+                  handleInputChange({
+                    target: {
+                      name: "postDeadline",
+                      value: date ? date.toISOString().split("T")[0] : "",
+                    },
+                  })
+                }
+              />
+              <p
+                id="direct-postDeadline-error"
+                className="text-xs text-red-500 mt-1 hidden"
+              >
+                Post deadline is required
+              </p>
+            </div>
+
             <div>
               <label
                 htmlFor="location"
@@ -678,7 +720,25 @@ export function PublicJobForm({
               Campaign goal is required
             </p>
           </div>
-
+          <label className="block text-xs text-white">Select Niche</label>
+          <div className="flex flex-wrap gap-2">
+            {contentTypeCategories.map((category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => {
+                  toggleNiche(category);
+                }}
+                className={`px-4 py-1 rounded-full text-sm ${
+                  selectedNiche.includes(category)
+                    ? "bg-epiclinx-teal text-black"
+                    : "bg-epiclinx-semiteal text-black hover:bg-[#00e5c9] hover:transition-all hover:duration-200"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
           <div>
             <label
               htmlFor="requirements"
