@@ -60,7 +60,7 @@ const JobSchema = new Schema<IJob>(
     collaborationType: { type: String},
     paymentType: { type: String, required: false },
     followerSize: { type: String, required: false },
-    totalPayment: { type: Schema.Types.Mixed, required: true },
+    totalPayment: { type: String, required: true },
     selectedPlatforms: { type: [String], required: true, default: [] },
     selectedContentTypes: { type: [String], required: true, default: [] },
     hashtags: { type: [String], required: false, default: [] },

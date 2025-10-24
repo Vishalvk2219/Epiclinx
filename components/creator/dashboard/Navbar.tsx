@@ -1,21 +1,38 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { apiLogout } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileRef = useRef(null);
   const pathname = usePathname();
   const { user } = useAuthStore();
+  const router = useRouter()
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const closeMenu = () => setMenuOpen(false);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
+        setProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   // Close menu when clicking escape key and handle body scroll
   useEffect(() => {
     const handleEscKey = (e: KeyboardEvent) => {
@@ -157,20 +174,38 @@ const Navbar = () => {
               </Link>
             </div>
 
-            <Link href={"/dashboard/creator/profile-management"}>
-              {/* <div className='h-10 w-10 bg-white rounded-full flex items-center justify-center cursor-pointer'> */}
-              <Image
-                src={
-                  user?.profileImageUrl ||
-                  "https://easy-peasy.ai/cdn-cgi/image/quality=80,format=auto,width=700/https://media.easy-peasy.ai/fb9a7875-06f1-48d6-b719-ba908fd7217f/f8225861-19d3-4b7e-8bdc-d4cee17872ca.png"
-                }
-                alt="Post Job"
-                width={10}
-                height={10}
-                className="object-cover h-10 w-10 rounded-full"
-              />
-              {/* </div> */}
-            </Link>
+            <div className="relative" ref={profileRef}>
+              <button onClick={() => setProfileMenuOpen(prev => !prev)}>
+                <Image
+                  src={user?.profileImageUrl || "/emptyProfile.png"}
+                  alt="Avatar"
+                  width={10}
+                  height={10}
+                  className="object-cover h-10 w-10 rounded-full"
+                />
+              </button>
+
+              {profileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-[#3c3c3c] rounded shadow-lg z-50 flex flex-col">
+                  <Link
+                    href="/dashboard/creator/profile-management"
+                    className="px-4 py-2 hover:bg-gray-700"
+                    onClick={() => setProfileMenuOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    className="px-4 py-2 text-left hover:bg-gray-700"
+                    onClick={async () => {
+                      await apiLogout();
+                      router.push("/dashboard/"+user?.role)
+                    }}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Mobile menu icon */}
             <Menu
@@ -183,11 +218,50 @@ const Navbar = () => {
 
       {/* Backdrop overlay */}
       {menuOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
-          onClick={closeMenu}
-          aria-hidden="true"
-        />
+        <>
+          <div className="mt-6 px-4">
+            <span className="text-sm text-gray-400">Account</span>
+            <button
+              onClick={() => setProfileMenuOpen((prev) => !prev)}
+              className="flex items-center gap-2 w-full"
+            >
+              <Image
+                src={user?.profileImageUrl || "/placeholder.svg"}
+                alt="Avatar"
+                width={32}
+                height={32}
+                className="rounded-full"
+              />
+              <span>Account</span>
+            </button>
+            {profileMenuOpen && (
+              <div className="flex flex-col bg-[#3c3c3c] rounded mt-2">
+                <Link
+                  href="/dashboard/creator/profile-management"
+                  className="px-4 py-2 hover:bg-gray-700"
+                  onClick={() => setProfileMenuOpen(false)}
+                >
+                  Profile
+                </Link>
+                <button
+                  className="px-4 py-2 text-left hover:bg-gray-700"
+                  onClick={async () => {
+                    await apiLogout();
+                    router.push("/dashboard/"+user?.role)
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
+            onClick={closeMenu}
+            aria-hidden="true"
+          />
+        </>
       )}
 
       {/* Side drawer menu */}

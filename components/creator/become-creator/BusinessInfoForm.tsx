@@ -36,7 +36,7 @@ export const makeCreatorInfoSchema = (role: "creator" | "brand") => {
       lastName: z.string().min(1, "Last name is required"),
       location: z.string().min(1, "Location is required"),
       otherSocial: z.string().min(1, "Other Social is required"),
-      followers: z.number().min(1000,"Minimum follower count should be 1000")
+      followers: z.coerce.number().min(1000,"Minimum follower count should be 1000")
     });
   }
 
@@ -95,6 +95,7 @@ export default function BusinessInfoForm({
       businessDescription: formData?.businessDescription || "",
       companyName: formData?.companyName || "",
       shopAddress: formData?.shopAddress || "",
+      followers:formData?.followers || ""
     });
     // explicitly reset selectedCategories too
     setSelectedCategories(formData.categories || []);
@@ -674,11 +675,18 @@ export default function BusinessInfoForm({
               </Label>
               <Input
                 id="followers"
+                type="number"
+                min={1000}
                 placeholder="Enter follower count"
-                {...register("followers")}
+                {...register("followers",{valueAsNumber: true})}
                 onChange={handleInputChange}
                 className="border-gray-400 text-white bg-transparent rounded-full"
               />
+              {(errors as any).followers && (
+                <p className="text-red-500 text-xs mt-1">
+                  {(errors as any).followers?.message}
+                </p>
+              )}
             </div>
           )}
           <div className="space-y-4">

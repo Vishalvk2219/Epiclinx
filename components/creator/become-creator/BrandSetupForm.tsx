@@ -9,10 +9,9 @@ import { LegalInfoForm } from "./LegalFormInfo";
 import { AccountInfoForm } from "./AccountInfoForm";
 import { AdditionalInfoForm } from "./AdditionalInfo";
 import BusinessInfoForm from "./BusinessInfoForm";
-import { apiLogout, apiPost, apiUpload } from "@/lib/api";
+import { apiLogout, apiPost, apiPut, apiUpload } from "@/lib/api";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/useAuthStore";
-
 
 const LOCAL_KEY = "epiclinx_signup_data";
 
@@ -263,7 +262,7 @@ export function MultiStepForm() {
                 updateFormData={updateFormData}
                 isSubmitting={isSubmitting || isUploading}
                 onNext={async (dataFromChild: any) => {
-                  console.log("STEP1 got pissed", formData);
+                  console.log("STEP1 Done", formData);
                   await updateFormData(dataFromChild);
                   setIsSubmitting(true);
                   try {
@@ -290,6 +289,9 @@ export function MultiStepForm() {
                       user: any;
                     }>("/auth/register", payload);
                     useAuthStore.getState().setUser(response.user);
+                    if (!response.success){
+                      throw new Error("Error Saving User info")
+                    }
                     nextStep();
                   } catch (err: any) {
                     toast({
@@ -331,15 +333,22 @@ export function MultiStepForm() {
                         "Card details verified. Saved for future payments",
                     });
 
+                    const subscriptionResponse = await apiPut(
+                      "/subscription",
+                      { email: formData.email, session_id: result.session_id }
+                    );
                     const payload = {
                       email: formData.email,
-                      stripeCheckoutSessionId: result.session.id,
+                      subscription: subscriptionResponse.subscriptionId,
                       abn,
                     };
                     const response = await apiPost<{ user: any }>(
                       "/auth/legal-info",
                       payload
                     );
+                    if (!response.success){
+                      throw new Error("Error Saving User info")
+                    }
                     useAuthStore.getState().setUser(response.user);
                     nextStep();
                   }
@@ -368,6 +377,9 @@ export function MultiStepForm() {
                         email: formData.email,
                       }
                     );
+                    if (!response.success){
+                      throw new Error("Error Saving User info")
+                    }
                     useAuthStore.getState().setUser(response.user);
                     nextStep();
                   } catch (err: any) {
@@ -403,6 +415,9 @@ export function MultiStepForm() {
                         agreedToTerms: dataFromChild.agreeToTerms,
                       }
                     );
+                    if (!response.success){
+                      throw new Error("Error Saving User info")
+                    }
                     useAuthStore.getState().setUser(response.user);
                     toast({
                       variant: "success",

@@ -27,7 +27,7 @@ export interface IUser extends Document {
   businessWebsite?: string;
   businessDescription?: string;
   abn?: string;
-  stripeCheckoutSessionId?: string;
+  subscription: Schema.Types.ObjectId;
   creditCardNumber?: string;
   cvv?: string;
   expiryDate?: string;
@@ -71,7 +71,7 @@ const userSchema = new Schema<IUser>(
     businessDescription: { type: String },
     abn: { type: String },
     username: { type: String },
-    stripeCheckoutSessionId: { type: String, select: false },
+    subscription: { type: Schema.Types.ObjectId,ref:"Subscription"},
     creditCardNumber: { type: String, select: false },
     cvv: { type: String, select: false },
     expiryDate: { type: String, select: false },

@@ -1,4 +1,5 @@
 import connectDB from "@/lib/connect-db";
+import subscriptionModel from "@/models/Subscription";
 import { NextResponse } from "next/server";
 import Stripe from "stripe"
 
@@ -13,7 +14,7 @@ const planPrices:Record<string,number> = {
 }
 
 export async function POST(req:Request){
-    try{
+    try{ 
         const body = await req.json();
         const {email,plan,currency,recurring_interval,trial} = body
         const amount = planPrices[plan]
@@ -45,6 +46,9 @@ export async function POST(req:Request){
             }
         )
 
+        await subscriptionModel.create(
+            {email,plan,currency,recurringInterval:recurring_interval,trial,sessionClientSecret:session.client_secret}
+        )
         return NextResponse.json(
             {success:true, checkoutSessionClientSecret:session.client_secret},
             {status:200}

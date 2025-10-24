@@ -8,11 +8,11 @@ export async function POST(req:Request){
         connectDB();
 
         const body = await req.json();
-        const {email, stripeCheckoutSessionId, abn=""} = body;
+        const {email, subscription, abn=""} = body;
 
         const user = await User.findOneAndUpdate(
             {email},
-            {abn,stripeCheckoutSessionId},
+            {abn,subscription},
             {new:true}
         )
 

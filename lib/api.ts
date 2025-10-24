@@ -73,6 +73,30 @@ export async function apiPost<T>(endpoint: string, body: any): Promise<T> {
   }
 }
 
+export async function apiPut<T>(endpoint: string, body: any): Promise<T> {
+  try {
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(body),
+    });
+
+    let responseBody: any = null;
+
+    try {
+      responseBody = await res.json();
+    } catch (err) {
+      throw new Error(`Unexpected error format from ${endpoint}`);
+    }
+
+    return responseBody;
+  } catch (e: any) {
+    throw new Error(e?.message || "API error");
+  }
+}
 export async function apiUpload(formData: FormData): Promise<string> {
   try {
     const res = await fetch(`${BASE_URL}/uploads/profile-images`, {

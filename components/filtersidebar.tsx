@@ -201,7 +201,7 @@ export default function FilterSidebar({
             >
               <option value="">Select a country</option>
              {countries.map((country)=>(
-              <option value={country.value}>
+              <option key={country.label} value={country.value}>
                 {country.label}
               </option>
              ))}
