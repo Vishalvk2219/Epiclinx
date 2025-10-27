@@ -30,14 +30,18 @@ const step1Schema = z.object({
   campaignImageUrl: z.string().min(1, "Campaign image is required"),
   campaignName: z.string().min(1, "Campaign name is required"),
   campaignBrief: z.string().min(1, "Campaign brief is required"),
-  campaignDuration: z
+  campaignStartDate: z
     .string()
-    .min(1, "Campaign start and end dates are required")
-    .refine(
-      (val) => val.includes(" - ") && val.split(" - ").every((d) => d.length > 0),
-      { message: "Both campaign start and end dates are required" }
-    ),
-  postDeadline: z.string().min(1, "Post deadline is required"),
+    .min(1, "Campaign start date is required")
+    .refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
+  campaignEndDate: z
+    .string()
+    .min(1, "Campaign end date is required")
+    .refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
+  postDeadline: z
+    .string()
+    .min(1, "Post deadline is required")
+    .refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
   agreeToTerms: z.literal(true, {
     errorMap: () => ({ message: "You must agree to the terms and conditions" }),
   }),
@@ -55,7 +59,7 @@ const step3Schema = z.object({
   collaborationType: z.string().min(1, "Collaboration type is required"),
   totalPayment: z
     .string()
-    .min(1, "Total payment is required")
+    .min(0, "Total payment is required")
     .regex(/^[0-9]+(\.[0-9]{1,2})?$/, "Please enter a valid amount"),
   contentApproval: z.boolean(),
   allowShowcase: z.boolean(),
@@ -90,7 +94,8 @@ export function DirectOfferForm({
     campaignImageUrl: "",
     campaignName: "",
     campaignBrief: "",
-    campaignDuration: "",
+    campaignStartDate: "",
+    campaignEndDate: "",
     postDeadline: "",
     campaignGoal: "",
     requirements: "",
@@ -98,73 +103,20 @@ export function DirectOfferForm({
     tagUs: "",
     keepItAuthentic: "",
     dontDo: "",
-    totalPayment: "",
+    totalPayment: null,
     agreeToTerms: false,
     contentApproval: true,
     allowShowcase: true,
     collaborationType: "",
   });
+
   const [selectedNiche, setSelectedNiche] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Date string helpers
-  const getCampaignStartDate = () => {
-    if (formData.campaignDuration) {
-      const dates = formData.campaignDuration.split(" - ");
-      return dates[0] ? new Date(dates[0]) : undefined;
-    }
-    return undefined;
-  };
-
-  const getCampaignEndDate = () => {
-    if (formData.campaignDuration) {
-      const dates = formData.campaignDuration.split(" - ");
-      return dates[1] ? new Date(dates[1]) : undefined;
-    }
-    return undefined;
-  };
-
-  const handleCampaignDateChange = (
-    field: "start" | "end",
-    date: Date | undefined
-  ) => {
-    const startDate = field === "start" ? date : getCampaignStartDate();
-    const endDate = field === "end" ? date : getCampaignEndDate();
-
-    if (startDate && endDate) {
-      setFormData((prev) => ({
-        ...prev,
-        campaignDuration: `${startDate} - ${endDate}`,
-      }));
-       if (errors['campaignDuration']) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors['campaignDuration'];
-        return newErrors;
-      });
-    }
-    } else if (startDate) {
-      setFormData((prev) => ({
-        ...prev,
-        campaignDuration: `${startDate} - `,
-      }));
-    } else if (endDate) {
-      setFormData((prev) => ({
-        ...prev,
-        campaignDuration: ` - ${endDate}`,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        campaignDuration: "",
-      }));
-    }
-  };
-
   const handleSelectChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-     if (errors[field]) {
+    if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
@@ -207,12 +159,12 @@ export function DirectOfferForm({
       const newHashtags = [...hashtags, tag];
       setHashtags(newHashtags);
       if (newHashtags.length > 0 && errors.hashtags) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.hashtags;
-        return newErrors;
-      });
-    }
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.hashtags;
+          return newErrors;
+        });
+      }
     }
   };
 
@@ -357,10 +309,11 @@ export function DirectOfferForm({
               style={{ display: "none" }}
             />
             {errors.campaignImageUrl && (
-            <p className="text-xs text-red-500 mt-1">{errors.campaignImageUrl}</p>
-          )}
+              <p className="text-xs text-red-500 mt-1">
+                {errors.campaignImageUrl}
+              </p>
+            )}
           </div>
-          
 
           <div>
             <label
@@ -406,7 +359,9 @@ export function DirectOfferForm({
               onChange={handleInputChange}
             />
             {errors.campaignBrief && (
-              <p className="text-xs text-red-500 mt-1">{errors.campaignBrief}</p>
+              <p className="text-xs text-red-500 mt-1">
+                {errors.campaignBrief}
+              </p>
             )}
           </div>
           <label className="block text-xs text-white">Select Niche</label>
@@ -448,8 +403,17 @@ export function DirectOfferForm({
                   Campaign Start Date
                 </label>
                 <DatePicker
-                  value={getCampaignStartDate()}
-                  onChange={(date) => handleCampaignDateChange("start", date)}
+                  value={
+                    formData.campaignStartDate
+                      ? new Date(formData.campaignStartDate)
+                      : undefined
+                  }
+                  onChange={(date) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      campaignStartDate: date ? date.toISOString() : "",
+                    }))
+                  }
                 />
               </div>
               <div>
@@ -457,8 +421,17 @@ export function DirectOfferForm({
                   Campaign End Date
                 </label>
                 <DatePicker
-                  value={getCampaignEndDate()}
-                  onChange={(date) => handleCampaignDateChange("end", date)}
+                  value={
+                    formData.campaignEndDate
+                      ? new Date(formData.campaignEndDate)
+                      : undefined
+                  }
+                  onChange={(date) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      campaignEndDate: date ? date.toISOString() : "",
+                    }))
+                  }
                 />
               </div>
               {errors.campaignDuration && (
@@ -484,7 +457,7 @@ export function DirectOfferForm({
                   handleInputChange({
                     target: {
                       name: "postDeadline",
-                      value: date,
+                      value: date ? date.toISOString() : "",
                     },
                   } as any)
                 }
@@ -585,7 +558,9 @@ export function DirectOfferForm({
               onChange={handleInputChange}
             />
             {errors.captionGuidelines && (
-              <p className="text-xs text-red-500 mt-1">{errors.captionGuidelines}</p>
+              <p className="text-xs text-red-500 mt-1">
+                {errors.captionGuidelines}
+              </p>
             )}
           </div>
         </div>
@@ -615,7 +590,9 @@ export function DirectOfferForm({
                 </SelectContent>
               </Select>
               {errors.collaborationType && (
-                <p className="text-xs text-red-500 mt-1">{errors.collaborationType}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.collaborationType}
+                </p>
               )}
             </div>
             <div className="relative">
@@ -641,7 +618,9 @@ export function DirectOfferForm({
                 onChange={handleInputChange}
               />
               {errors.totalPayment && (
-                <p className="text-xs text-red-500 mt-1">{errors.totalPayment}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.totalPayment}
+                </p>
               )}
               <p className="text-xs text-gray-400 mt-1">
                 This amount will remain private and is only visible to accepted
@@ -747,7 +726,9 @@ export function DirectOfferForm({
               onChange={handleInputChange}
             />
             {errors.keepItAuthentic && (
-              <p className="text-xs text-red-500 mt-1">{errors.keepItAuthentic}</p>
+              <p className="text-xs text-red-500 mt-1">
+                {errors.keepItAuthentic}
+              </p>
             )}
           </div>
           <div>

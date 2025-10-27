@@ -27,7 +27,8 @@ export interface PublicFormData {
     campaignImageUrl:string
     campaignName: string
     campaignBrief: string
-    campaignDuration: string
+    campaignStartDate: string
+    campaignEndDate: string
     postDeadline: string
     campaignGoal: string
     requirements: string

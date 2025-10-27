@@ -24,6 +24,7 @@ import { Messages } from "../Messages";
 import CampaignList from "./CampaignList";
 import FilterSidebar from "@/components/filtersidebar";
 import { apiFetch } from "@/lib/api";
+import { PlatformIcons } from "@/components/ui/platformIcons";
 
 interface Job {
   id: string;
@@ -51,6 +52,7 @@ const CampaignList = (pagination = false) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [jobs, setJobs] = useState([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<
     "campaigns" | "submissions"
   >("campaigns");
@@ -174,7 +176,7 @@ const CampaignList = (pagination = false) => {
         brand: jobs.companyId.companyName,
         description: jobs.campaignBrief,
         platforms: jobs.selectedPlatforms,
-        requirements: followerRanges[jobs.followerSize],
+        followerSize: followerRanges[jobs.followerSize],
         payment: jobs.budget,
         status: jobs.status,
         applicants: jobs.applicants?.length || 0,
@@ -185,6 +187,7 @@ const CampaignList = (pagination = false) => {
         niche: jobs.niche,
         follower: jobs.followerSize,
         location: jobs.location || "",
+        jobType: jobs.jobType,
       }));
       setJobs(requiredFieldJobs);
     } catch (error: any) {
@@ -342,15 +345,14 @@ const CampaignList = (pagination = false) => {
     <div>
       <div className="mb-6 flex items-center gap-3">
         <FilterSidebar
-          customStyle={
-            pagination
-              ? "border border-gray-400 text-white"
-              : "border border-gray-700 text-black"
-          }
-          onApply={(newFilters) => {
-            setFilters(newFilters);
-            setCurrentPage(1); // Reset to first page when filters change
-          }}
+          openSidebar={() => setSidebarOpen(true)}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          categories={filters.categories}
+          followers={filters.followers}
+          platforms={filters.platforms}
+          location={filters.location}
+          onChange={(newFilters) => setFilters(newFilters)}
         />
         <div className="relative flex-1">
           <Search
@@ -388,7 +390,7 @@ const CampaignList = (pagination = false) => {
           </span>
         ))}
       </div>
-       <span className="text-white/90 text-xs">{`${filteredJobs.length} creators found`}</span>
+      <span className="text-white/90 text-xs">{`${filteredJobs.length} campaigns found`}</span>
       <div className="space-y-4">
         {(pagination ? paginatedJobs : filteredJobs.slice(0, 7)).map((job) => (
           <div
@@ -502,10 +504,12 @@ const CampaignList = (pagination = false) => {
               <p className="text-white text-sm font-light">{job.description}</p>
 
               {/* Row 5: Nano */}
-              <div className="flex items-center gap-2 text-white text-sm font-light">
-                <Users className="w-4 h-4" />
-                {job.requirements}
-              </div>
+              {job.followerSize ? (
+                <div className="flex items-center gap-2 text-white text-sm font-light">
+                  <Users className="w-4 h-4" />
+                  {job.followerSize}
+                </div>
+              ) : null}
 
               {/* Row 6: UGC */}
               <div className="flex items-center gap-1 text-white text-xs font-light">
@@ -517,6 +521,10 @@ const CampaignList = (pagination = false) => {
               <div className="flex items-center gap-1 text-white text-sm font-light">
                 <DollarSign className="w-4 h-4" />
                 {job.collaborationType}
+              </div>
+
+              <div className="flex items-center gap-1 text-white text-sm font-light">
+                Type: {job.jobType}
               </div>
 
               {/* Row 8: Bids/Applicants */}
@@ -561,61 +569,7 @@ const CampaignList = (pagination = false) => {
                       <h3 className="text-white font-medium">{job.title}</h3>
                     </Link>
                     {/* Row 3: Platform logos */}
-                    <div className="flex space-x-2">
-                      {job.platforms.map((platform, index) => {
-                        const name = platform.toLowerCase();
-
-                        // Define all supported platforms once
-                        const platformMap: Record<
-                          string,
-                          { icon: JSX.Element; url: string }
-                        > = {
-                          instagram: {
-                            icon: (
-                              <PiInstagramLogoFill className="w-5 h-5 text-black/80" />
-                            ),
-                            url: "https://www.instagram.com",
-                          },
-                          tiktok: {
-                            icon: (
-                              <PiTiktokLogoFill className="w-5 h-5 text-black/80" />
-                            ),
-                            url: "https://www.tiktok.com",
-                          },
-                          youtube: {
-                            icon: (
-                              <FaYoutube className="w-5 h-5 text-black/80" />
-                            ),
-                            url: "https://www.youtube.com",
-                          },
-                          facebook: {
-                            icon: (
-                              <FaFacebook className="w-5 h-5 text-black/80" />
-                            ),
-                            url: "https://www.facebook.com",
-                          },
-                        };
-
-                        const platformData = platformMap[name];
-
-                        if (!platformData) return null; // skip unsupported ones
-
-                        return (
-                          <div
-                            key={index}
-                            className="w-8 h-8 rounded-full bg-epiclinx-semiteal flex items-center justify-center"
-                          >
-                            <a
-                              href={platformData.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {platformData.icon}
-                            </a>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <PlatformIcons platforms={job.platforms}></PlatformIcons>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
@@ -669,10 +623,12 @@ const CampaignList = (pagination = false) => {
                 </p>
 
                 <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-2 text-white text-sm font-light">
-                    <Users className="w-5 h-5" />
-                    {job.requirements}
-                  </div>
+                  {job.followerSize ? (
+                    <div className="flex items-center gap-2 text-white text-sm font-light">
+                      <Users className="w-5 h-5" />
+                      {job.followerSize}
+                    </div>
+                  ) : null}
 
                   <div className="flex items-center gap-1 text-white text-xs font-light">
                     <Briefcase className="w-5 h-5" />
@@ -682,6 +638,10 @@ const CampaignList = (pagination = false) => {
                   <div className="flex items-center gap-1 text-white text-sm font-light">
                     <DollarSign className="w-5 h-5" />
                     {job.collaborationType}
+                  </div>
+
+                  <div className="flex items-center gap-1 text-white text-sm font-light">
+                    Type: {job.jobType}
                   </div>
 
                   <div className="ml-auto text-white text-xs font-light">

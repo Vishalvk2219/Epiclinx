@@ -12,7 +12,8 @@ export interface IJob extends Document {
   dontDo: string;
   budget: string;
   location: string;
-  campaignDuration: string;
+  campaignStartDate: string;
+  campaignEndDate:string;
   postDeadline: string;
   multipleCreators: boolean;
   agreeToTerms: boolean;
@@ -50,7 +51,8 @@ const JobSchema = new Schema<IJob>(
     dontDo: { type: String, required: true },
     budget: { type: String, required: false },
     location: { type: String, required: false },
-    campaignDuration: { type: String },
+    campaignStartDate: { type: String },
+    campaignEndDate:{type:String},
     postDeadline: { type: String },
     multipleCreators: { type: Boolean, required: false, default: false },
     agreeToTerms: { type: Boolean, required: true },

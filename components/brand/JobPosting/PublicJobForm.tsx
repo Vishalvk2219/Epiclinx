@@ -62,7 +62,11 @@ const step1Schema = z.object({
     .refine((val) => !val || !isNaN(Date.parse(val)), {
       message: "Campaign duration must be a valid date string",
     }),
-  postDeadline: z.string().min(1, "Post deadline is required"),
+  postDeadline: z
+  .string()
+  .min(1, "Post deadline is required")
+  .refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
+
   location: z
     .string()
     .optional()
@@ -624,8 +628,8 @@ export function PublicJobForm({
                     : undefined
                 }
                 onChange={(date) => {
-                  const value = date ? date : "";
-                  setFormData((prev) => ({ ...prev, postDeadline: date }));
+                 const isoString = date ? date.toISOString() : "";
+                  setFormData((prev) => ({ ...prev, postDeadline: isoString }));
 
                   // Clear existing error if any
                   if (errors.postDeadline) {

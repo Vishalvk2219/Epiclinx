@@ -39,7 +39,7 @@ export async function POST(req:Request){
                     }
                 ],
                 ...(trial && 
-                    {subscription_data:{trail_period_days:7}}
+                    {subscription_data:{trial_period_days:7}}
                 ),
                 metadata:{plan,email},
                 ui_mode:"custom"

@@ -87,10 +87,6 @@ export default function InfluencerList({ jobId }) {
 
   const itemsPerPage = 3;
 
-  if (creators.length === 0) {
-    return <p>No Bids Found...</p>;
-  }
-
   const filteredCreators = creators.filter((creator) => {
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();

@@ -2,7 +2,25 @@ import { useAuthStore } from "@/stores/useAuthStore";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export async function apiFetch(endpoint: string, options?: RequestInit) {
+
+function handleApiError(endpoint: string, res: Response, body: any) {
+  const error: any = new Error(body?.message || res.statusText || "API error");
+  error.statusCode = res.status;
+  error.statusText = res.statusText;
+  error.raw = body;
+  console.error(`❌ API error at ${endpoint}:`, {
+    status: res.status,
+    statusText: res.statusText,
+    body,
+  });
+  return error;
+}
+
+
+export async function apiFetch<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       ...options,
@@ -10,117 +28,116 @@ export async function apiFetch(endpoint: string, options?: RequestInit) {
         "Content-Type": "application/json",
         ...(options?.headers || {}),
       },
-      credentials: "include", // Send cookies including HttpOnly refresh/access tokens
+      credentials: "include", // Include cookies (e.g., tokens)
     });
 
-    if (!res.ok) {
-      const errorBody = await res.json();
-      const error = new Error(errorBody.message || "API error");
-      // Attach extra fields to the error object
-      (error as any).statusCode = errorBody.statusCode;
-      (error as any).raw = errorBody.raw;
-      (error as any).error = errorBody.error;
-      throw error;
+    let responseBody: any = null;
+    try {
+      responseBody = await res.json();
+    } catch {
+      responseBody = null;
     }
 
-    const data = await res.json();
-    return data
+    if (!res.ok) throw handleApiError(endpoint, res, responseBody);
+
+    return responseBody as T;
   } catch (e: any) {
-    throw new Error(e?.message || "API error");
+    console.error(`apiFetch failed at ${endpoint}:`, e);
+    throw e;
   }
 }
+
 
 export async function apiPost<T>(endpoint: string, body: any): Promise<T> {
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify(body),
     });
 
     let responseBody: any = null;
-
     try {
       responseBody = await res.json();
-    } catch (err) {
-      throw new Error(`Unexpected error format from ${endpoint}`);
+    } catch {
+      throw new Error(`Unexpected response format from ${endpoint}`);
     }
 
-    // if (!res.ok) {
+    if (!res.ok) throw handleApiError(endpoint, res, responseBody);
 
-    //   console.log(res)
-
-    //   // Construct a custom error with extra details
-    //   const error: any = new Error(responseBody.message || "API error");
-    //   error.statusCode = responseBody.statusCode || res.status;
-    //   error.statusText = responseBody.error || res.statusText;
-    //   error.raw = responseBody;
-    //   console.log("responseBody~~", responseBody)
-    //   throw error;
-    // }
-
-    /*
-    error: "Conflict"
-    message: "Subscription already created"
-    statusCode: 409
-    */
-    return responseBody;
+    return responseBody as T;
   } catch (e: any) {
-    throw new Error(e?.message || "API error");
+    console.error(`apiPost failed at ${endpoint}:`, e);
+    throw e;
   }
 }
+
 
 export async function apiPut<T>(endpoint: string, body: any): Promise<T> {
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify(body),
     });
 
     let responseBody: any = null;
-
     try {
       responseBody = await res.json();
-    } catch (err) {
-      throw new Error(`Unexpected error format from ${endpoint}`);
+    } catch {
+      throw new Error(`Unexpected response format from ${endpoint}`);
     }
 
-    return responseBody;
+    if (!res.ok) throw handleApiError(endpoint, res, responseBody);
+
+    return responseBody as T;
   } catch (e: any) {
-    throw new Error(e?.message || "API error");
+    console.error(`apiPut failed at ${endpoint}:`, e);
+    throw e;
   }
 }
+
+
 export async function apiUpload(formData: FormData): Promise<string> {
   try {
     const res = await fetch(`${BASE_URL}/uploads/profile-images`, {
       method: "POST",
       body: formData,
-      credentials: "include", // In case backend validates session
+      credentials: "include",
     });
 
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.message || "Upload failed");
+    let data: any = null;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error("Unexpected response format from upload endpoint");
     }
 
-      const data = await res.json();
-      return data.url;
+    if (!res.ok) throw handleApiError("/uploads/profile-images", res, data);
+
+    return data.url;
   } catch (e: any) {
-    throw new Error(e?.message || "API error");
+    console.error("apiUpload failed:", e);
+    throw e;
   }
 }
 
+
 export async function apiLogout() {
-  await fetch(`${BASE_URL}/auth/logout`, {
-    method: "POST",
-    credentials: "include",
-  });
-  useAuthStore.getState().clearUser();
+  try {
+    const res = await fetch(`${BASE_URL}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      console.warn("Logout request failed:", res.statusText);
+    }
+  } catch (e) {
+    console.error("apiLogout error:", e);
+  } finally {
+    useAuthStore.getState().clearUser();
+  }
 }

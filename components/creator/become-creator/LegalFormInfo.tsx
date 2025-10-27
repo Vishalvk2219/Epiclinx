@@ -19,6 +19,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { apiPost } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 const legalInfoSchema = z.object({
   abn: z.string().optional(),
@@ -49,7 +50,6 @@ export function LegalInfoForm({
   const [isPaymentComplete, setIsPaymentComplete] = useState(false);
   const [isFailedToCreateSession, setIsFailedToCreateSession] = useState(false);
   const { toast } = useToast();
-
   const {
     register,
     handleSubmit,
@@ -258,6 +258,7 @@ function InnerLegalForm({
   isSubmitting: boolean;
 }) {
   const checkout = useCheckout();
+  const user = useAuthStore((state) => state.user);
 
   const handleOnSubmit = (event: any) => {
     event.preventDefault();
@@ -282,7 +283,7 @@ function InnerLegalForm({
           }}
         />
 
-        <div className="pt-7 space-y-2">
+        {user?.role === "brand" ? <div className="pt-7 space-y-2">
           <Label
             htmlFor="abn"
             className="text-gray-100 font-light text-xs flex items-center gap-1"
@@ -298,7 +299,7 @@ function InnerLegalForm({
           {errors.abn && (
             <p className="text-red-500 text-xs mt-1">{errors.abn.message}</p>
           )}
-        </div>
+        </div> : null}
       </div>
 
       <div className="flex justify-center gap-4 !mt-16">

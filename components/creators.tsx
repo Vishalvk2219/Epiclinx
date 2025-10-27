@@ -9,6 +9,7 @@ import {
   X,
   ChevronRight,
   ChevronLeft,
+  SlidersHorizontal,
 } from "lucide-react";
 import Image from "next/image";
 import FilterSidebar from "./filtersidebar";
@@ -51,6 +52,7 @@ export default function SpotlightedCreators({
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [creators, setCreators] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const itemsPerPage = 8;
 
   const [filters, setFilters] = useState<FilterState>({
@@ -277,7 +279,7 @@ export default function SpotlightedCreators({
           platforms: [
             creator?.instagram && "instagram",
             creator?.facebook && "facebook",
-            creator?.tiktok && "tiktok",  
+            creator?.tiktok && "tiktok",
           ].filter(Boolean),
           instagram: creator.instagram,
           facebook: creator.facebook,
@@ -365,7 +367,10 @@ export default function SpotlightedCreators({
       return false;
     }
     // Location filter
-    if (filters.location && creator.location.toLowerCase() !== filters.location.toLowerCase()) {
+    if (
+      filters.location &&
+      creator.location.toLowerCase() !== filters.location.toLowerCase()
+    ) {
       return false;
     }
 
@@ -443,16 +448,17 @@ export default function SpotlightedCreators({
 
         <div className="mb-6 flex items-center gap-3">
           <FilterSidebar
-            customStyle={
-              pagination
-                ? "border border-gray-400 text-white"
-                : "border border-gray-700 text-black"
-            }
-            onApply={(newFilters) => {
-              setFilters(newFilters);
-              setCurrentPage(1); // Reset to first page when filters change
-            }}
+            openSidebar={()=>setSidebarOpen(true)}
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            categories={filters.categories}
+            followers={filters.followers}
+            platforms={filters.platforms}
+            location={filters.location}
+            featured={filters.featured}
+            onChange={(newFilters) => setFilters(newFilters)}
           />
+
           <div className="relative flex-1">
             <Search
               className={
@@ -490,7 +496,7 @@ export default function SpotlightedCreators({
             </span>
           ))}
         </div>
-         <span className="text-white/90 text-xs">{`${filteredCreators.length} creators found`}</span>
+        <span className="text-white/90 text-xs">{`${filteredCreators?.length} creators found`}</span>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {(pagination ? paginatedCreators : filteredCreators.slice(0, 7)).map(
             (creator) => (

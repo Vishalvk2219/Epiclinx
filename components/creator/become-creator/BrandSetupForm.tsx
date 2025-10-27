@@ -289,8 +289,8 @@ export function MultiStepForm() {
                       user: any;
                     }>("/auth/register", payload);
                     useAuthStore.getState().setUser(response.user);
-                    if (!response.success){
-                      throw new Error("Error Saving User info")
+                    if (!response.success) {
+                      throw new Error("Error Saving User info");
                     }
                     nextStep();
                   } catch (err: any) {
@@ -315,45 +315,55 @@ export function MultiStepForm() {
                 onNext={async (checkout, abn) => {
                   setIsSubmitting(true);
                   updateFormData({ abn });
-                  const result = await checkout.confirm({
-                    returnUrl: window.location.href,
-                    redirect: "if_required",
-                  });
-                  if (result.type === "error") {
+                  try {
+                    const result = await checkout.confirm({
+                      returnUrl: window.location.href,
+                      redirect: "if_required",
+                    });
+                    if (result.type === "error") {
+                      toast({
+                        variant: "destructive",
+                        title: "Card Authorization Failed",
+                        description: result.error?.message,
+                      });
+                    } else {
+                      console.log(result)
+                      const subscriptionResponse = await apiPut(
+                        "/subscription",
+                        {
+                          email: formData.email,
+                          stripeSessionId: result.session.id,
+                        }
+                      );
+                      console.log(subscriptionResponse);
+                      const payload = {
+                        email: formData.email,
+                        subscription: subscriptionResponse.subscriptionId,
+                        abn,
+                      };
+                      const response = await apiPost<{ user: any }>(
+                        "/auth/legal-info",
+                        payload
+                      );
+                      toast({
+                        variant: "success",
+                        title: "Card Authorized & Saved",
+                        description:
+                          "Card details verified. Saved for future payments",
+                      });
+                      useAuthStore.getState().setUser(response.user);
+                      nextStep();
+                    }
+                  } catch (err: any) {
                     toast({
                       variant: "destructive",
-                      title: "Card Authorization Failed",
-                      description: result.error?.message,
+                      title: "Save failed",
+                      description: err.message || "Could not save Legal info.",
                     });
-                  } else {
-                    toast({
-                      variant: "success",
-                      title: "Card Authorized & Saved",
-                      description:
-                        "Card details verified. Saved for future payments",
-                    });
-
-                    const subscriptionResponse = await apiPut(
-                      "/subscription",
-                      { email: formData.email, session_id: result.session_id }
-                    );
-                    const payload = {
-                      email: formData.email,
-                      subscription: subscriptionResponse.subscriptionId,
-                      abn,
-                    };
-                    const response = await apiPost<{ user: any }>(
-                      "/auth/legal-info",
-                      payload
-                    );
-                    if (!response.success){
-                      throw new Error("Error Saving User info")
-                    }
-                    useAuthStore.getState().setUser(response.user);
-                    nextStep();
+                  } finally {
+                    setIsSubmitting(false);
+                    setShowRestoredMsg(false);
                   }
-                  setIsSubmitting(false);
-                  setShowRestoredMsg(false);
                 }}
                 onBack={prevStep}
                 onNextIsPaymentComplete={nextStep}
@@ -377,9 +387,6 @@ export function MultiStepForm() {
                         email: formData.email,
                       }
                     );
-                    if (!response.success){
-                      throw new Error("Error Saving User info")
-                    }
                     useAuthStore.getState().setUser(response.user);
                     nextStep();
                   } catch (err: any) {
@@ -415,8 +422,8 @@ export function MultiStepForm() {
                         agreedToTerms: dataFromChild.agreeToTerms,
                       }
                     );
-                    if (!response.success){
-                      throw new Error("Error Saving User info")
+                    if (!response.success) {
+                      throw new Error("Error Saving User info");
                     }
                     useAuthStore.getState().setUser(response.user);
                     toast({
@@ -425,6 +432,8 @@ export function MultiStepForm() {
                       description:
                         "Prepearing Your Dashboard. You will be there soon",
                     });
+                    await new Promise<void>((resolve) => setTimeout(resolve, 3000));
+                    router.push("/dashboard/" + response.user.role);
                     try {
                       await apiPost(
                         "/send-mail/registration-successful",
@@ -433,8 +442,6 @@ export function MultiStepForm() {
                     } catch (error: any) {
                       console.log(error.message);
                     }
-                    // await new Promise((res) => setTimeout(res, 3000));
-                    router.push("/dashboard/" + formData.role);
                   } catch (err: any) {
                     toast({
                       variant: "destructive",
