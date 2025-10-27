@@ -4,6 +4,7 @@
 import type React from "react";
 import { useRef, useState } from "react";
 import Image from "next/image";
+import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,6 +37,73 @@ import { apiUpload } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { DatePicker } from "@/components/DatePicker";
 import { contentTypeCategories } from "@/lib/utils";
+
+// Validation using Zod
+
+// Step 1 Schema: Basic job ad information including campaign image upload
+const step1Schema = z.object({
+  campaignName: z.string().min(1, "Campaign name is required"),
+  campaignBrief: z.string().min(1, "Campaign brief is required"),
+  budget: z
+    .string()
+    .min(1, "Budget is required")
+    .regex(/^[0-9]+(\.[0-9]{1,2})?$/, "Please enter a valid amount"),
+  platforms: z.array(z.string()).min(1, "Please select at least one platform"),
+  agreeToTerms: z.literal(true, {
+    errorMap: () => ({ message: "You must agree to the terms and conditions" }),
+  }),
+  // Newly added validations
+  taskType: z.string().min(1, "Task type is required"),
+  paymentType: z.string().min(1, "Payment type is required"),
+  followerSize: z.string().min(1, "Follower size is required"),
+  campaignImageUrl: z.string().min(1, "Please Select valid Image"),
+  campaignDuration: z
+    .string()
+    .refine((val) => !val || !isNaN(Date.parse(val)), {
+      message: "Campaign duration must be a valid date string",
+    }),
+  postDeadline: z.string().min(1, "Post deadline is required"),
+  location: z
+    .string()
+    .optional()
+    .refine((val) => val === undefined || val.length > 0, {
+      message: "Location cannot be empty if provided",
+    }),
+});
+
+// Step 2 Schema: Campaign goal, requirements, content types + niche and hashtags (optional)
+const step2Schema = z.object({
+  campaignGoal: z.string().min(1, "Campaign goal is required"),
+  requirements: z.string().min(1, "Requirements are required"),
+  contentTypes: z
+    .array(z.string())
+    .min(1, "Please select at least one content type"),
+  captionGuidelines: z.string().min(1, "Caption guidelines are required"),
+  niche: z.array(z.string()).min(1, "Please select at least one niche"),
+});
+
+// Step 3 Schema: Payment & deliverables including collaboration type and toggles
+const step3Schema = z.object({
+  totalPayment: z
+    .string()
+    .min(1, "Total payment is required")
+    .regex(/^[0-9]+(\.[0-9]{1,2})?$/, "Please enter a valid amount"),
+  collaborationType: z.string().min(1, "Collaboration type is required"),
+  multipleCreators: z.boolean(),
+  contentApproval: z.boolean(),
+  allowShowcase: z.boolean(),
+  offerType: z.enum(["fixed", "variable"]),
+});
+
+// Step 4 Schema: Final fields - tags, authenticity, exclusions
+const step4Schema = z.object({
+  hashtags: z.array(z.string()).min(1, "Please add at least one hashtag"),
+  tagUs: z.string().min(1, "Tag information is required"),
+  keepItAuthentic: z.string().min(1, "This field is required"),
+  dontDo: z.string().min(1, "This field is required"),
+});
+
+//-------------------------------------------------
 
 interface PublicJobFormProps {
   currentStep: number;
@@ -77,6 +145,17 @@ export function PublicJobForm({
   });
 
   const [selectedNiche, setSelectedNiche] = useState<string[]>([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>(
+    []
+  );
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [offerType, setOfferType] = useState<OfferType>("fixed");
+  const [otherContentType, setOtherContentType] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const toggleNiche = (category: string) => {
     setSelectedNiche((prev) =>
@@ -85,28 +164,30 @@ export function PublicJobForm({
         : [...prev, category]
     );
   };
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>(
-    []
-  );
-  const [hashtags, setHashtags] = useState<string[]>([]);
-  const [offerType, setOfferType] = useState<OfferType>("fixed");
-  const [otherContentType, setOtherContentType] = useState("");
-  // const [selectedCountry, setSelectedCountry] = useState(undefined);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  // const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+
   const handleSelectChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
-  // Input change handlers
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleToggleChange = (name: string, checked: boolean) => {
@@ -116,12 +197,22 @@ export function PublicJobForm({
   const handleCountry = (val: string) => {
     setFormData((prev) => ({ ...prev, location: val }));
   };
+
   const handlePlatformToggle = (platform: Platform) => {
     const newPlatforms = selectedPlatforms.includes(platform)
       ? selectedPlatforms.filter((p) => p !== platform)
       : [...selectedPlatforms, platform];
 
     setSelectedPlatforms(newPlatforms);
+
+    // Clear platform error when user selects a platform
+    if (newPlatforms.length > 0 && errors.platforms) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.platforms;
+        return newErrors;
+      });
+    }
   };
 
   const handleContentTypeToggle = (type: ContentType) => {
@@ -130,12 +221,28 @@ export function PublicJobForm({
       : [...selectedContentTypes, type];
 
     setSelectedContentTypes(newContentTypes);
+
+    // Clear contentTypes error when user selects a type
+    if (newContentTypes.length > 0 && errors.contentTypes) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.contentTypes;
+        return newErrors;
+      });
+    }
   };
 
   const addHashtag = (tag: string) => {
     if (tag && !hashtags.includes(tag)) {
       const newHashtags = [...hashtags, tag];
       setHashtags(newHashtags);
+     if (newHashtags.length > 0 && errors.hashtags) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.hashtags;
+        return newErrors; 
+      });
+    }
     }
   };
 
@@ -151,11 +258,10 @@ export function PublicJobForm({
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
+    setIsUploading(true);
     const file = event.target.files?.[0];
     if (file) {
-      // setSelectedImage(file);
       setPreviewUrl(URL.createObjectURL(file));
-      setIsUploading(true);
       try {
         const formData = new FormData();
         formData.append("file", file);
@@ -172,213 +278,95 @@ export function PublicJobForm({
         });
       } finally {
         setIsUploading(false);
+        if (fileInputRef.current) {
+          setErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors.campaignImageUrl;
+            return newErrors;
+          });
+        }
+        
       }
     }
   };
+
   const onNextStep = async () => {
-    // Validate based on current step
-    const fieldsToValidate = [];
-    let isValid = true;
-
-    if (currentStep === 1) {
-      // Step 1 validation
-      if (!formData.campaignName.trim()) {
-        document
-          .getElementById("campaignName")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("campaignName-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("campaignName")
-          ?.classList.remove("border-red-500");
-        document.getElementById("campaignName-error")?.classList.add("hidden");
+    try {
+      // Step 1
+      if (currentStep === 1) {
+        step1Schema.parse({
+          campaignName: formData.campaignName,
+          campaignBrief: formData.campaignBrief,
+          budget: formData.budget,
+          platforms: selectedPlatforms,
+          agreeToTerms: formData.agreeToTerms,
+          taskType: formData.taskType,
+          paymentType: formData.paymentType,
+          followerSize: formData.followerSize,
+          campaignImageUrl: formData.campaignImageUrl,
+          campaignDuration: formData.campaignDuration,
+          postDeadline: formData.postDeadline,
+          location: formData.location,
+        });
+      }
+      // Step 2
+      else if (currentStep === 2) {
+        step2Schema.parse({
+          campaignGoal: formData.campaignGoal,
+          requirements: formData.requirements,
+          contentTypes: selectedContentTypes,
+          captionGuidelines: formData.captionGuidelines,
+          niche: selectedNiche,
+        });
+      }
+      // Step 3
+      else if (currentStep === 3) {
+        step3Schema.parse({
+          totalPayment: formData.totalPayment,
+          collaborationType: formData.collaborationType,
+          multipleCreators: formData.multipleCreators,
+          contentApproval: formData.contentApproval,
+          allowShowcase: formData.allowShowcase,
+          offerType: offerType,
+        });
+      }
+      // Step 4
+      else if (currentStep === 4) {
+        step4Schema.parse({
+          hashtags: hashtags,
+          tagUs: formData.tagUs,
+          keepItAuthentic: formData.keepItAuthentic,
+          dontDo: formData.dontDo,
+        });
       }
 
-      if (!formData.campaignBrief.trim()) {
-        document
-          .getElementById("campaignBrief")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("campaignBrief-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("campaignBrief")
-          ?.classList.remove("border-red-500");
-        document.getElementById("campaignBrief-error")?.classList.add("hidden");
-      }
+      setErrors({});
 
-      if (!formData.budget.trim()) {
-        document.getElementById("budget")?.classList.add("border-red-500");
-        document.getElementById("budget-error")?.classList.remove("hidden");
-        isValid = false;
-      } else if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(formData.budget)) {
-        document.getElementById("budget")?.classList.add("border-red-500");
-        document.getElementById("budget-error")?.classList.remove("hidden");
-        document.getElementById("budget-error-text").innerText =
-          "Please enter a valid amount";
-        isValid = false;
-      } else {
-        document.getElementById("budget")?.classList.remove("border-red-500");
-        document.getElementById("budget-error")?.classList.add("hidden");
-      }
-
-      if (selectedPlatforms.length === 0) {
-        document.getElementById("platforms-error")?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document.getElementById("platforms-error")?.classList.add("hidden");
-      }
-
-      if (!formData.agreeToTerms) {
-        document.getElementById("terms-error")?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document.getElementById("terms-error")?.classList.add("hidden");
-      }
-    } else if (currentStep === 2) {
-      // Step 2 validation
-      if (!formData.campaignGoal.trim()) {
-        document
-          .getElementById("campaignGoal")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("campaignGoal-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("campaignGoal")
-          ?.classList.remove("border-red-500");
-        document.getElementById("campaignGoal-error")?.classList.add("hidden");
-      }
-
-      if (!formData.requirements.trim()) {
-        document
-          .getElementById("requirements")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("requirements-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("requirements")
-          ?.classList.remove("border-red-500");
-        document.getElementById("requirements-error")?.classList.add("hidden");
-      }
-
-      if (selectedContentTypes.length === 0) {
-        document
-          .getElementById("contentTypes-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document.getElementById("contentTypes-error")?.classList.add("hidden");
-      }
-
-      if (!formData.captionGuidelines.trim()) {
-        document
-          .getElementById("captionGuidelines")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("captionGuidelines-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("captionGuidelines")
-          ?.classList.remove("border-red-500");
-        document
-          .getElementById("captionGuidelines-error")
-          ?.classList.add("hidden");
-      }
-    } else if (currentStep === 3) {
-      // Step 3 validation
-      const totalPaymentInput = document.getElementById(
-        "totalPayment"
-      ) as HTMLInputElement;
-      if (!totalPaymentInput?.value.trim()) {
-        totalPaymentInput?.classList.add("border-red-500");
-        document
-          .getElementById("totalPayment-error")
-          ?.classList.remove("hidden");
-        document.getElementById("totalPayment-error-text").innerText =
-          "Total payment is required";
-        isValid = false;
-      } else if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(totalPaymentInput.value)) {
-        totalPaymentInput?.classList.add("border-red-500");
-        document
-          .getElementById("totalPayment-error")
-          ?.classList.remove("hidden");
-        document.getElementById("totalPayment-error-text").innerText =
-          "Please enter a valid amount";
-        isValid = false;
-      } else {
-        totalPaymentInput?.classList.remove("border-red-500");
-        document.getElementById("totalPayment-error")?.classList.add("hidden");
-      }
-    } else if (currentStep === 4) {
-      // Step 4 validation
-      if (!formData.tagUs.trim()) {
-        document.getElementById("tagUs")?.classList.add("border-red-500");
-        document.getElementById("tagUs-error")?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document.getElementById("tagUs")?.classList.remove("border-red-500");
-        document.getElementById("tagUs-error")?.classList.add("hidden");
-      }
-
-      if (!formData.keepItAuthentic.trim()) {
-        document
-          .getElementById("keepItAuthentic")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("keepItAuthentic-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("keepItAuthentic")
-          ?.classList.remove("border-red-500");
-        document
-          .getElementById("keepItAuthentic-error")
-          ?.classList.add("hidden");
-      }
-
-      if (!formData.dontDo.trim()) {
-        document.getElementById("dontDo")?.classList.add("border-red-500");
-        document.getElementById("dontDo-error")?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document.getElementById("dontDo")?.classList.remove("border-red-500");
-        document.getElementById("dontDo-error")?.classList.add("hidden");
-      }
-    }
-
-    if (isValid) {
       if (currentStep === 4) {
-        // Submit the form
         const data = {
           ...formData,
           selectedPlatforms,
           selectedContentTypes,
           hashtags,
-          niche:selectedNiche,
+          niche: selectedNiche,
           offerType,
         };
         handleSubmit(data);
       } else {
         nextStep();
       }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const formattedErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          const path = err.path[0] as string;
+          formattedErrors[path] = err.message;
+        });
+        setErrors(formattedErrors);
+      }
     }
   };
 
-  // Render the appropriate step based on currentStep
   return (
     <div className="transition-all duration-300 ease-in-out">
       {/* Step 1: Basic job ad information */}
@@ -403,11 +391,12 @@ export function PublicJobForm({
                 />
               )}
             </div>
-            {/* <div className="text-white">{formData.campaignName || "Your Brand"}</div> */}
             <button
-              className="back-button !w-40"
               onClick={handleCampaignUpload}
               disabled={isUploading}
+              className={`back-button !w-40 ${
+                errors.campaignImageUrl ? "border-red-500" : "border-gray-400"
+              }`}
             >
               {isUploading ? "Uploading..." : "Upload photo"}
             </button>
@@ -418,6 +407,11 @@ export function PublicJobForm({
               accept="image/*"
               style={{ display: "none" }}
             />
+            {errors.campaignImageUrl && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.campaignImageUrl}
+              </p>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -433,17 +427,17 @@ export function PublicJobForm({
                 id="campaignName"
                 name="campaignName"
                 placeholder="Enter Job Title for your Campaign"
-                className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+                className={`w-full rounded-full bg-transparent border text-white focus:border-[#00CEC9] ${
+                  errors.campaignName ? "border-red-500" : "border-gray-400"
+                }`}
                 value={formData.campaignName}
                 onChange={handleInputChange}
               />
-              {/* Error message */}
-              <p
-                id="campaignName-error"
-                className="text-xs text-red-500 mt-1 hidden"
-              >
-                Campaign name is required
-              </p>
+              {errors.campaignName && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.campaignName}
+                </p>
+              )}
             </div>
 
             <div>
@@ -462,24 +456,24 @@ export function PublicJobForm({
                 id="campaignBrief"
                 name="campaignBrief"
                 placeholder="What type of content & influencer you're looking for"
-                className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-400 text-white focus:border-[#00CEC9] focus:outline-none resize-none h-24"
+                className={`w-full px-4 py-3 rounded-xl bg-transparent border text-white focus:border-[#00CEC9] focus:outline-none resize-none h-24 ${
+                  errors.campaignBrief ? "border-red-500" : "border-gray-400"
+                }`}
                 maxLength={150}
                 value={formData.campaignBrief}
                 onChange={handleInputChange}
               />
-              {/* Error message */}
-              <p
-                id="campaignBrief-error"
-                className="text-xs text-red-500 mt-1 hidden"
-              >
-                Campaign brief is required
-              </p>
+              {errors.campaignBrief && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.campaignBrief}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label
-                  htmlFor="TaskType"
+                  htmlFor="taskType"
                   className="block text-xs text-white mb-1"
                 >
                   Task Type
@@ -498,6 +492,9 @@ export function PublicJobForm({
                     <SelectItem value="sponsored">Sponsored</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.taskType && (
+                  <p className="text-xs text-red-500 mt-1">{errors.taskType}</p>
+                )}
               </div>
               <div>
                 <label
@@ -520,6 +517,11 @@ export function PublicJobForm({
                     <SelectItem value="commission">Commission</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.paymentType && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.paymentType}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -529,13 +531,9 @@ export function PublicJobForm({
                 selectedPlatforms={selectedPlatforms}
                 onPlatformToggle={handlePlatformToggle}
               />
-              {/* Error message */}
-              <p
-                id="platforms-error"
-                className="text-xs text-red-500 mt-1 hidden"
-              >
-                Please select at least one platform
-              </p>
+              {errors.platforms && (
+                <p className="text-xs text-red-500 mt-1">{errors.platforms}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -569,6 +567,11 @@ export function PublicJobForm({
                     </SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.followerSize && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.followerSize}
+                  </p>
+                )}
               </div>
               <div className="relative">
                 <label
@@ -585,17 +588,15 @@ export function PublicJobForm({
                   id="budget"
                   name="budget"
                   placeholder="Enter Campaign Budget"
-                  className="w-full pl-8 rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+                  className={`w-full pl-8 rounded-full bg-transparent border text-white focus:border-[#00CEC9] ${
+                    errors.budget ? "border-red-500" : "border-gray-400"
+                  }`}
                   value={formData.budget}
                   onChange={handleInputChange}
                 />
-                {/* Error message */}
-                <p
-                  id="budget-error"
-                  className="text-xs text-red-500 mt-1 hidden"
-                >
-                  <span id="budget-error-text">Budget is required</span>
-                </p>
+                {errors.budget && (
+                  <p className="text-xs text-red-500 mt-1">{errors.budget}</p>
+                )}
               </div>
             </div>
 
@@ -622,21 +623,25 @@ export function PublicJobForm({
                     ? new Date(formData.postDeadline)
                     : undefined
                 }
-                onChange={(date) =>
-                  handleInputChange({
-                    target: {
-                      name: "postDeadline",
-                      value: date ? date.toISOString().split("T")[0] : "",
-                    },
-                  })
-                }
+                onChange={(date) => {
+                  const value = date ? date : "";
+                  setFormData((prev) => ({ ...prev, postDeadline: date }));
+
+                  // Clear existing error if any
+                  if (errors.postDeadline) {
+                    setErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.postDeadline;
+                      return newErrors;
+                    });
+                  }
+                }}
               />
-              <p
-                id="direct-postDeadline-error"
-                className="text-xs text-red-500 mt-1 hidden"
-              >
-                Post deadline is required
-              </p>
+              {errors.postDeadline && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.postDeadline}
+                </p>
+              )}
             </div>
 
             <div>
@@ -663,32 +668,43 @@ export function PublicJobForm({
               label="Multiple Creators available"
             />
 
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="agreeToTerms"
-                checked={formData.agreeToTerms}
-                onCheckedChange={(checked) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    agreeToTerms: checked === true,
-                  }));
-                }}
-                className="h-4 w-4 rounded border-gray-400 bg-transparent text-[#00CEC9] focus:ring-[#00CEC9]"
-              />
-              <label htmlFor="agreeToTerms" className="text-xs text-white">
-                Agree to EpicLinx{" "}
-                <Link
-                  href="/terms-and-conditions"
-                  className="text-epiclinx-teal"
-                >
-                  Terms & Conditions
-                </Link>
-              </label>
+            <div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="agreeToTerms"
+                  checked={formData.agreeToTerms}
+                  onCheckedChange={(checked) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      agreeToTerms: checked === true,
+                    }));
+                    // Clear error when user checks the box
+                    if (checked && errors.agreeToTerms) {
+                      setErrors((prev) => {
+                        const newErrors = { ...prev };
+                        delete newErrors.agreeToTerms;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-gray-400 bg-transparent text-[#00CEC9] focus:ring-[#00CEC9]"
+                />
+                <label htmlFor="agreeToTerms" className="text-xs text-white">
+                  Agree to EpicLinx{" "}
+                  <Link
+                    href="/terms-and-conditions"
+                    className="text-epiclinx-teal"
+                  >
+                    Terms & Conditions
+                  </Link>
+                </label>
+              </div>
+              {errors.agreeToTerms && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.agreeToTerms}
+                </p>
+              )}
             </div>
-            {/* Error message */}
-            <p id="terms-error" className="text-xs text-red-500 mt-1 hidden">
-              You must agree to the terms and conditions
-            </p>
           </div>
         </div>
       )}
@@ -708,37 +724,41 @@ export function PublicJobForm({
               id="campaignGoal"
               name="campaignGoal"
               placeholder="E.g., Promote a product, boost brand awareness, increase sales"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border text-white focus:border-[#00CEC9] ${
+                errors.campaignGoal ? "border-red-500" : "border-gray-400"
+              }`}
               value={formData.campaignGoal}
               onChange={handleInputChange}
             />
-            {/* Error message */}
-            <p
-              id="campaignGoal-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              Campaign goal is required
-            </p>
+            {errors.campaignGoal && (
+              <p className="text-xs text-red-500 mt-1">{errors.campaignGoal}</p>
+            )}
           </div>
-          <label className="block text-xs text-white">Select Niche</label>
-          <div className="flex flex-wrap gap-2">
-            {contentTypeCategories.map((category) => (
-              <button
-                key={category}
-                type="button"
-                onClick={() => {
-                  toggleNiche(category);
-                }}
-                className={`px-4 py-1 rounded-full text-sm ${
-                  selectedNiche.includes(category)
-                    ? "bg-epiclinx-teal text-black"
-                    : "bg-epiclinx-semiteal text-black hover:bg-[#00e5c9] hover:transition-all hover:duration-200"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+
+          <div>
+            <label className="block text-xs text-white mb-2">
+              Select Niche
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {contentTypeCategories.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => {
+                    toggleNiche(category);
+                  }}
+                  className={`px-4 py-1 rounded-full text-sm ${
+                    selectedNiche.includes(category)
+                      ? "bg-epiclinx-teal text-black"
+                      : "bg-epiclinx-semiteal text-black hover:bg-[#00e5c9] hover:transition-all hover:duration-200"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
           </div>
+
           <div>
             <label
               htmlFor="requirements"
@@ -751,17 +771,15 @@ export function PublicJobForm({
               id="requirements"
               name="requirements"
               placeholder="E.g., 1 Instagram Reel + 2 Stories"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border text-white focus:border-[#00CEC9] ${
+                errors.requirements ? "border-red-500" : "border-gray-400"
+              }`}
               value={formData.requirements}
               onChange={handleInputChange}
             />
-            {/* Error message */}
-            <p
-              id="requirements-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              Requirements are required
-            </p>
+            {errors.requirements && (
+              <p className="text-xs text-red-500 mt-1">{errors.requirements}</p>
+            )}
           </div>
 
           <div>
@@ -772,13 +790,9 @@ export function PublicJobForm({
               selectedContentTypes={selectedContentTypes}
               onContentTypeToggle={handleContentTypeToggle}
             />
-            {/* Error message */}
-            <p
-              id="contentTypes-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              Please select at least one content type
-            </p>
+            {errors.contentTypes && (
+              <p className="text-xs text-red-500 mt-1">{errors.contentTypes}</p>
+            )}
             {selectedContentTypes.includes("Other") && (
               <Input
                 type="text"
@@ -804,17 +818,17 @@ export function PublicJobForm({
               id="captionGuidelines"
               name="captionGuidelines"
               placeholder="E.g., Mention our brand and use #OurHashtag"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border text-white focus:border-[#00CEC9] ${
+                errors.captionGuidelines ? "border-red-500" : "border-gray-400"
+              }`}
               value={formData.captionGuidelines}
               onChange={handleInputChange}
             />
-            {/* Error message */}
-            <p
-              id="captionGuidelines-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              Caption guidelines are required
-            </p>
+            {errors.captionGuidelines && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.captionGuidelines}
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -844,6 +858,11 @@ export function PublicJobForm({
                   <SelectItem value="commission">Commission</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.collaborationType && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.collaborationType}
+                </p>
+              )}
             </div>
             <div className="relative">
               <label
@@ -860,19 +879,17 @@ export function PublicJobForm({
                 id="totalPayment"
                 name="totalPayment"
                 placeholder="Enter Total Payment"
-                className="w-full pl-8 rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+                className={`w-full pl-8 rounded-full bg-transparent border text-white focus:border-[#00CEC9] ${
+                  errors.totalPayment ? "border-red-500" : "border-gray-400"
+                }`}
                 value={formData.totalPayment}
                 onChange={handleInputChange}
               />
-              {/* Error message */}
-              <p
-                id="totalPayment-error"
-                className="text-xs text-red-500 mt-1 hidden"
-              >
-                <span id="totalPayment-error-text">
-                  Total payment is required
-                </span>
-              </p>
+              {errors.totalPayment && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.totalPayment}
+                </p>
+              )}
               <p className="text-xs text-gray-400 mt-1">
                 This amount will remain private and is only visible to accepted
                 creators. Held securely in escrow until job completion.
@@ -914,14 +931,15 @@ export function PublicJobForm({
               id="tagUs"
               name="tagUs"
               placeholder="@BrandHandle"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border text-white focus:border-[#00CEC9] ${
+                errors.tagUs ? "border-red-500" : "border-gray-400"
+              }`}
               value={formData.tagUs}
               onChange={handleInputChange}
             />
-            {/* Error message */}
-            <p id="tagUs-error" className="text-xs text-red-500 mt-1 hidden">
-              Tag information is required
-            </p>
+            {errors.tagUs && (
+              <p className="text-xs text-red-500 mt-1">{errors.tagUs}</p>
+            )}
           </div>
 
           <div>
@@ -933,6 +951,9 @@ export function PublicJobForm({
               onAddHashtag={addHashtag}
               onRemoveHashtag={removeHashtag}
             />
+            {errors.hashtags && (
+              <p className="text-xs text-red-500 mt-1">{errors.hashtags}</p>
+            )}
           </div>
 
           <div>
@@ -947,17 +968,17 @@ export function PublicJobForm({
               id="keepItAuthentic"
               name="keepItAuthentic"
               placeholder="E.g., Be yourself, make it engaging"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border text-white focus:border-[#00CEC9] ${
+                errors.keepItAuthentic ? "border-red-500" : "border-gray-400"
+              }`}
               value={formData.keepItAuthentic}
               onChange={handleInputChange}
             />
-            {/* Error message */}
-            <p
-              id="keepItAuthentic-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              This field is required
-            </p>
+            {errors.keepItAuthentic && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.keepItAuthentic}
+              </p>
+            )}
           </div>
 
           <div>
@@ -969,14 +990,15 @@ export function PublicJobForm({
               id="dontDo"
               name="dontDo"
               placeholder="E.g., No competitor mentions, no misleading claims"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border text-white focus:border-[#00CEC9] ${
+                errors.dontDo ? "border-red-500" : "border-gray-400"
+              }`}
               value={formData.dontDo}
               onChange={handleInputChange}
             />
-            {/* Error message */}
-            <p id="dontDo-error" className="text-xs text-red-500 mt-1 hidden">
-              This field is required
-            </p>
+            {errors.dontDo && (
+              <p className="text-xs text-red-500 mt-1">{errors.dontDo}</p>
+            )}
           </div>
         </div>
       )}

@@ -11,6 +11,7 @@ import {
   Gavel,
   Search,
   Users,
+  X,
 } from "lucide-react";
 import { cn, followerRanges } from "@/lib/utils";
 import { PiInstagramLogoFill, PiTiktokLogoFill } from "react-icons/pi";
@@ -45,10 +46,11 @@ interface Job {
   icon: string;
 }
 
-const CampaignList = () => {
+const CampaignList = (pagination = false) => {
   const [activeTab, setActiveTab] = useState<string>("Pending Applications");
   const [currentPage, setCurrentPage] = useState(1);
   const [jobs, setJobs] = useState([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [activeSection, setActiveSection] = useState<
     "campaigns" | "submissions"
   >("campaigns");
@@ -180,6 +182,9 @@ const CampaignList = () => {
         collaborationType: jobs.collaborationType,
         icon: jobs.icon,
         contentType: jobs.contentType,
+        niche: jobs.niche,
+        follower: jobs.followerSize,
+        location: jobs.location || "",
       }));
       setJobs(requiredFieldJobs);
     } catch (error: any) {
@@ -190,17 +195,144 @@ const CampaignList = () => {
   useEffect(() => {
     getJobs();
   }, []);
-  const filteredJobs =
-    activeSection === "campaigns"
-      ? jobs
-      : jobs.filter((job) => job.status === activeTab);
+  type FilterState = {
+    categories: string[];
+    followers: string[];
+    platforms: string[];
+    location: string;
+  };
+  const [filters, setFilters] = useState<FilterState>({
+    categories: [],
+    followers: [],
+    platforms: [],
+    location: "",
+  });
 
+  const filteredJobs = jobs.filter((job) => {
+    // Search filter
+    if (
+      searchTerm &&
+      !job.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !job.niche.some((cat) =>
+        cat.toLowerCase().includes(searchTerm.toLowerCase())
+      ) &&
+      !job.location.toLowerCase().includes(searchTerm.toLowerCase())
+    ) {
+      return false;
+    }
+
+    // Category filter
+    if (
+      filters.categories.length > 0 &&
+      !job.niche.some((cat) =>
+        filters.categories.some((fc) => fc.toLowerCase() === cat.toLowerCase())
+      )
+    ) {
+      return false;
+    }
+
+    // Follower size filter (simplified implementation)
+    if (filters.follower > 0) {
+      const followerCount = job.follower;
+      let matchesFollowerSize = false;
+
+      for (const range of filters.followers) {
+        if (
+          range === "1000 to 10,000" &&
+          followerCount >= 1000 &&
+          followerCount <= 10000
+        ) {
+          matchesFollowerSize = true;
+          break;
+        } else if (
+          range === "10,000 to 50,000" &&
+          followerCount > 10000 &&
+          followerCount <= 50000
+        ) {
+          matchesFollowerSize = true;
+          break;
+        } else if (
+          range === "50,000 to 250,000" &&
+          followerCount > 50000 &&
+          followerCount <= 250000
+        ) {
+          matchesFollowerSize = true;
+          break;
+        } else if (range === "250,000+" && followerCount > 250000) {
+          matchesFollowerSize = true;
+          break;
+        }
+      }
+
+      if (!matchesFollowerSize) {
+        return false;
+      }
+    }
+
+    if (
+      filters.platforms.length > 0 &&
+      !job.platforms.some((p) =>
+        filters.platforms.some((fp) => fp.toLowerCase() === p.toLowerCase())
+      )
+    ) {
+      return false;
+    }
+    // Location filter
+    if (
+      filters.location &&
+      job.location.toLowerCase() !== filters.location.toLowerCase()
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Get active filter labels for display
+  const getActiveFilterLabels = () => {
+    const activeLabels: string[] = [];
+
+    filters.categories.forEach((cat) => activeLabels.push(cat));
+    filters.followers.forEach((follower) => activeLabels.push(follower));
+    filters.platforms.forEach((platform) => activeLabels.push(platform));
+    if (filters.location) activeLabels.push(filters.location);
+    if (searchTerm) activeLabels.push(`Search: ${searchTerm}`);
+
+    return activeLabels;
+  };
+
+  const activeFilterLabels = getActiveFilterLabels();
+
+  // Remove a specific filter
+  const removeFilter = (filter: string) => {
+    if (filter.startsWith("Search:")) {
+      setSearchTerm("");
+    } else if (filters.categories.includes(filter)) {
+      setFilters({
+        ...filters,
+        categories: filters.categories.filter((c) => c !== filter),
+      });
+    } else if (filters.followers.includes(filter)) {
+      setFilters({
+        ...filters,
+        followers: filters.followers.filter((f) => f !== filter),
+      });
+    } else if (filters.platforms.includes(filter)) {
+      setFilters({
+        ...filters,
+        platforms: filters.platforms.filter((p) => p !== filter),
+      });
+    } else if (filter === filters.location) {
+      setFilters({ ...filters, location: "" });
+    }
+  };
+
+  // Pagination logic
   const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
-  const currentJobs = filteredJobs.slice(
+  const paginatedJobs = filteredJobs.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -210,23 +342,55 @@ const CampaignList = () => {
     <div>
       <div className="mb-6 flex items-center gap-3">
         <FilterSidebar
-          customStyle="border border-gray-400 text-white/90"
-          onApply={() => console.log("Filters applied")}
+          customStyle={
+            pagination
+              ? "border border-gray-400 text-white"
+              : "border border-gray-700 text-black"
+          }
+          onApply={(newFilters) => {
+            setFilters(newFilters);
+            setCurrentPage(1); // Reset to first page when filters change
+          }}
         />
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search
+            className={
+              pagination
+                ? "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-100"
+                : "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-700"
+            }
+          />
           <input
             type="text"
             placeholder="Search"
-            className="w-full rounded-full bg-transparent border border-gray-400 py-2 pl-10 pr-4 text-sm"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // Reset to first page when search changes
+            }}
+            className={`w-full rounded-full py-2 pl-10 pr-4 text-sm ${
+              pagination
+                ? "bg-transparent border border-gray-400 text-white"
+                : "border border-gray-700 text-black"
+            }`}
           />
         </div>
       </div>
-      <span className="text-white/90 text-xs">{`${jobs.length} jobs found`}</span>
-      <br />
-      <br />
+      <div className="mb-6 flex flex-wrap gap-2">
+        {activeFilterLabels.map((filter) => (
+          <span
+            key={filter}
+            className="flex cursor-pointer items-center gap-1 rounded-full bg-white px-3 py-1 text-sm text-black"
+            onClick={() => removeFilter(filter)}
+          >
+            {filter}
+            <X className="h-4 w-4" />
+          </span>
+        ))}
+      </div>
+       <span className="text-white/90 text-xs">{`${filteredJobs.length} creators found`}</span>
       <div className="space-y-4">
-        {currentJobs.map((job) => (
+        {(pagination ? paginatedJobs : filteredJobs.slice(0, 7)).map((job) => (
           <div
             key={job.id}
             className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 relative"

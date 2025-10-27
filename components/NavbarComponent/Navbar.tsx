@@ -173,7 +173,7 @@ const Navbar = () => {
                 />
                 <span className="text-epiclinx-teal font-light text-sm">
                   <Link href={`/dashboard/${user.role || "creator"}/profile`}>
-                    Hello, {user.displayName || user.firstName}
+                    Hello, {user.role==="brand" ? user.companyName : user.firstName}
                   </Link>
                 </span>
               </div>

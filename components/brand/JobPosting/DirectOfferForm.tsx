@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useRef } from "react";
-import { useState } from "react";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
+import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,7 +12,6 @@ import {
   NavigationButtons,
   PlatformButtons,
 } from "./FormElements";
-import { Calendar } from "lucide-react";
 import Link from "next/link";
 import {
   Select,
@@ -25,6 +24,49 @@ import { DatePicker } from "@/components/DatePicker";
 import { toast } from "@/hooks/use-toast";
 import { apiUpload } from "@/lib/api";
 import { contentTypeCategories } from "@/lib/utils";
+
+// --- Zod Strict Schemas: All fields required/non-empty ---
+const step1Schema = z.object({
+  campaignImageUrl: z.string().min(1, "Campaign image is required"),
+  campaignName: z.string().min(1, "Campaign name is required"),
+  campaignBrief: z.string().min(1, "Campaign brief is required"),
+  campaignDuration: z
+    .string()
+    .min(1, "Campaign start and end dates are required")
+    .refine(
+      (val) => val.includes(" - ") && val.split(" - ").every((d) => d.length > 0),
+      { message: "Both campaign start and end dates are required" }
+    ),
+  postDeadline: z.string().min(1, "Post deadline is required"),
+  agreeToTerms: z.literal(true, {
+    errorMap: () => ({ message: "You must agree to the terms and conditions" }),
+  }),
+  platforms: z.array(z.string()).min(1, "Please select at least one platform"),
+  niche: z.array(z.string()).min(1, "Please select at least one niche"),
+});
+
+const step2Schema = z.object({
+  campaignGoal: z.string().min(1, "Campaign goal is required"),
+  requirements: z.string().min(1, "Requirements are required"),
+  captionGuidelines: z.string().min(1, "Caption guidelines are required"),
+});
+
+const step3Schema = z.object({
+  collaborationType: z.string().min(1, "Collaboration type is required"),
+  totalPayment: z
+    .string()
+    .min(1, "Total payment is required")
+    .regex(/^[0-9]+(\.[0-9]{1,2})?$/, "Please enter a valid amount"),
+  contentApproval: z.boolean(),
+  allowShowcase: z.boolean(),
+});
+
+const step4Schema = z.object({
+  tagUs: z.string().min(1, "Tag information is required"),
+  keepItAuthentic: z.string().min(1, "This field is required"),
+  dontDo: z.string().min(1, "This field is required"),
+  hashtags: z.array(z.string()).min(1, "Please add at least one hashtag"),
+});
 
 interface DirectOfferFormProps {
   currentStep: number;
@@ -40,7 +82,6 @@ export function DirectOfferForm({
   handleSubmit,
 }: DirectOfferFormProps) {
   const [hashtags, setHashtags] = useState<string[]>([]);
-  const [date, setDate] = React.useState<Date>();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -64,18 +105,10 @@ export function DirectOfferForm({
     collaborationType: "",
   });
   const [selectedNiche, setSelectedNiche] = useState<string[]>([]);
-
-  const toggleNiche = (category: string) => {
-    setSelectedNiche((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
-  };
-
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Helper functions to parse campaignDuration
+  // Date string helpers
   const getCampaignStartDate = () => {
     if (formData.campaignDuration) {
       const dates = formData.campaignDuration.split(" - ");
@@ -92,17 +125,6 @@ export function DirectOfferForm({
     return undefined;
   };
 
-  const handleSelectChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleCampaignDateChange = (
     field: "start" | "end",
     date: Date | undefined
@@ -111,23 +133,26 @@ export function DirectOfferForm({
     const endDate = field === "end" ? date : getCampaignEndDate();
 
     if (startDate && endDate) {
-      const startStr = startDate.toISOString().split("T")[0];
-      const endStr = endDate.toISOString().split("T")[0];
       setFormData((prev) => ({
         ...prev,
-        campaignDuration: `${startStr} - ${endStr}`,
+        campaignDuration: `${startDate} - ${endDate}`,
       }));
+       if (errors['campaignDuration']) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors['campaignDuration'];
+        return newErrors;
+      });
+    }
     } else if (startDate) {
-      const startStr = startDate.toISOString().split("T")[0];
       setFormData((prev) => ({
         ...prev,
-        campaignDuration: `${startStr} - `,
+        campaignDuration: `${startDate} - `,
       }));
     } else if (endDate) {
-      const endStr = endDate.toISOString().split("T")[0];
       setFormData((prev) => ({
         ...prev,
-        campaignDuration: ` - ${endStr}`,
+        campaignDuration: ` - ${endDate}`,
       }));
     } else {
       setFormData((prev) => ({
@@ -137,248 +162,43 @@ export function DirectOfferForm({
     }
   };
 
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+     if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
   const handlePlatformToggle = (platform: Platform) => {
     const newPlatforms = selectedPlatforms.includes(platform)
       ? selectedPlatforms.filter((p) => p !== platform)
       : [...selectedPlatforms, platform];
-
     setSelectedPlatforms(newPlatforms);
-  };
 
-  const onNextStep = () => {
-    let isValid = true;
-
-    if (currentStep === 1) {
-      if (!formData.campaignName.trim()) {
-        document
-          .getElementById("direct-campaignName")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("direct-campaignName-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("direct-campaignName")
-          ?.classList.remove("border-red-500");
-        document
-          .getElementById("direct-campaignName-error")
-          ?.classList.add("hidden");
-      }
-
-      if (!formData.campaignBrief.trim()) {
-        document
-          .getElementById("direct-campaignBrief")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("direct-campaignBrief-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("direct-campaignBrief")
-          ?.classList.remove("border-red-500");
-        document
-          .getElementById("direct-campaignBrief-error")
-          ?.classList.add("hidden");
-      }
-
-      if (selectedPlatforms.length === 0) {
-        document
-          .getElementById("direct-platforms-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("direct-platforms-error")
-          ?.classList.add("hidden");
-      }
-
-      if (
-        !formData.campaignDuration.trim() ||
-        !formData.campaignDuration.includes(" - ")
-      ) {
-        document
-          .getElementById("direct-campaignDuration-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        const dates = formData.campaignDuration.split(" - ");
-        if (!dates[0] || !dates[1]) {
-          document
-            .getElementById("direct-campaignDuration-error")
-            ?.classList.remove("hidden");
-          isValid = false;
-        } else {
-          document
-            .getElementById("direct-campaignDuration-error")
-            ?.classList.add("hidden");
-        }
-      }
-
-      if (!formData.postDeadline.trim()) {
-        document
-          .getElementById("direct-postDeadline")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("direct-postDeadline-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("direct-postDeadline")
-          ?.classList.remove("border-red-500");
-        document
-          .getElementById("direct-postDeadline-error")
-          ?.classList.add("hidden");
-      }
-
-      if (!formData.agreeToTerms) {
-        document
-          .getElementById("direct-terms-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document.getElementById("direct-terms-error")?.classList.add("hidden");
-      }
-    } else if (currentStep === 2) {
-      if (!formData.campaignGoal.trim()) {
-        document
-          .getElementById("direct-campaignGoal")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("direct-campaignGoal-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("direct-campaignGoal")
-          ?.classList.remove("border-red-500");
-        document
-          .getElementById("direct-campaignGoal-error")
-          ?.classList.add("hidden");
-      }
-
-      if (!formData.requirements.trim()) {
-        document
-          .getElementById("direct-requirements")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("direct-requirements-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("direct-requirements")
-          ?.classList.remove("border-red-500");
-        document
-          .getElementById("direct-requirements-error")
-          ?.classList.add("hidden");
-      }
-
-      if (!formData.captionGuidelines.trim()) {
-        document
-          .getElementById("direct-captionGuidelines")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("direct-captionGuidelines-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("direct-captionGuidelines")
-          ?.classList.remove("border-red-500");
-        document
-          .getElementById("direct-captionGuidelines-error")
-          ?.classList.add("hidden");
-      }
-    } else if (currentStep === 3) {
-      const totalPaymentInput = document.getElementById(
-        "direct-totalPayment"
-      ) as HTMLInputElement;
-      if (!totalPaymentInput?.value.trim()) {
-        totalPaymentInput?.classList.add("border-red-500");
-        document
-          .getElementById("direct-totalPayment-error")
-          ?.classList.remove("hidden");
-        document.getElementById("direct-totalPayment-error-text").innerText =
-          "Total payment is required";
-        isValid = false;
-      } else if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(totalPaymentInput.value)) {
-        totalPaymentInput?.classList.add("border-red-500");
-        document
-          .getElementById("direct-totalPayment-error")
-          ?.classList.remove("hidden");
-        document.getElementById("direct-totalPayment-error-text").innerText =
-          "Please enter a valid amount";
-        isValid = false;
-      } else {
-        totalPaymentInput?.classList.remove("border-red-500");
-        document
-          .getElementById("direct-totalPayment-error")
-          ?.classList.add("hidden");
-      }
-    } else if (currentStep === 4) {
-      if (!formData.tagUs.trim()) {
-        document
-          .getElementById("direct-tagUs")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("direct-tagUs-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("direct-tagUs")
-          ?.classList.remove("border-red-500");
-        document.getElementById("direct-tagUs-error")?.classList.add("hidden");
-      }
-
-      if (!formData.keepItAuthentic.trim()) {
-        document
-          .getElementById("direct-keepItAuthentic")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("direct-keepItAuthentic-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("direct-keepItAuthentic")
-          ?.classList.remove("border-red-500");
-        document
-          .getElementById("direct-keepItAuthentic-error")
-          ?.classList.add("hidden");
-      }
-
-      if (!formData.dontDo.trim()) {
-        document
-          .getElementById("direct-dontDo")
-          ?.classList.add("border-red-500");
-        document
-          .getElementById("direct-dontDo-error")
-          ?.classList.remove("hidden");
-        isValid = false;
-      } else {
-        document
-          .getElementById("direct-dontDo")
-          ?.classList.remove("border-red-500");
-        document.getElementById("direct-dontDo-error")?.classList.add("hidden");
-      }
-    }
-
-    if (isValid) {
-      if (currentStep === 4) {
-        const data = {
-          ...formData,
-          selectedPlatforms,
-          niche:selectedNiche,
-          hashtags,
-        };
-        handleSubmit(data);
-      } else {
-        nextStep();
-      }
+    if (newPlatforms.length > 0 && errors.platforms) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.platforms;
+        return newErrors;
+      });
     }
   };
 
@@ -386,12 +206,34 @@ export function DirectOfferForm({
     if (tag && !hashtags.includes(tag)) {
       const newHashtags = [...hashtags, tag];
       setHashtags(newHashtags);
+      if (newHashtags.length > 0 && errors.hashtags) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.hashtags;
+        return newErrors;
+      });
+    }
     }
   };
 
   const removeHashtag = (tag: string) => {
     const newHashtags = hashtags.filter((t) => t !== tag);
     setHashtags(newHashtags);
+  };
+
+  const toggleNiche = (category: string) => {
+    setSelectedNiche((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+    if (selectedNiche.length > 0 && errors.niche) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.niche;
+        return newErrors;
+      });
+    }
   };
 
   const handleCampaignUpload = () => {
@@ -406,9 +248,9 @@ export function DirectOfferForm({
       setPreviewUrl(URL.createObjectURL(file));
       setIsUploading(true);
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-        const response = await apiUpload(formData);
+        const formDataUpload = new FormData();
+        formDataUpload.append("file", file);
+        const response = await apiUpload(formDataUpload);
         setFormData((prev) => ({ ...prev, campaignImageUrl: response }));
         toast({
           variant: "success",
@@ -421,6 +263,58 @@ export function DirectOfferForm({
         });
       } finally {
         setIsUploading(false);
+      }
+    }
+  };
+
+  const onNextStep = () => {
+    setErrors({});
+    try {
+      if (currentStep === 1) {
+        step1Schema.parse({
+          ...formData,
+          platforms: selectedPlatforms,
+          niche: selectedNiche,
+        });
+      } else if (currentStep === 2) {
+        step2Schema.parse({
+          campaignGoal: formData.campaignGoal,
+          requirements: formData.requirements,
+          captionGuidelines: formData.captionGuidelines,
+        });
+      } else if (currentStep === 3) {
+        step3Schema.parse({
+          collaborationType: formData.collaborationType,
+          totalPayment: formData.totalPayment,
+          contentApproval: formData.contentApproval,
+          allowShowcase: formData.allowShowcase,
+        });
+      } else if (currentStep === 4) {
+        step4Schema.parse({
+          tagUs: formData.tagUs,
+          keepItAuthentic: formData.keepItAuthentic,
+          dontDo: formData.dontDo,
+          hashtags,
+        });
+      }
+      if (currentStep === 4) {
+        handleSubmit({
+          ...formData,
+          selectedPlatforms,
+          selectedNiche,
+          hashtags,
+        });
+      } else {
+        nextStep();
+      }
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        e.errors.forEach((err) => {
+          const key = err.path[0];
+          if (typeof key === "string") newErrors[key] = err.message;
+        });
+        setErrors(newErrors);
       }
     }
   };
@@ -462,7 +356,11 @@ export function DirectOfferForm({
               accept="image/*"
               style={{ display: "none" }}
             />
+            {errors.campaignImageUrl && (
+            <p className="text-xs text-red-500 mt-1">{errors.campaignImageUrl}</p>
+          )}
           </div>
+          
 
           <div>
             <label
@@ -476,18 +374,16 @@ export function DirectOfferForm({
               id="direct-campaignName"
               name="campaignName"
               placeholder="Enter Job Title for your Campaign"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border ${
+                errors.campaignName ? "border-red-500" : "border-gray-400"
+              } text-white focus:border-[#00CEC9]`}
               value={formData.campaignName}
               onChange={handleInputChange}
             />
-            <p
-              id="direct-campaignName-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              Campaign name is required
-            </p>
+            {errors.campaignName && (
+              <p className="text-xs text-red-500 mt-1">{errors.campaignName}</p>
+            )}
           </div>
-
           <div>
             <div className="flex justify-between mb-1">
               <label
@@ -502,21 +398,18 @@ export function DirectOfferForm({
               id="direct-campaignBrief"
               name="campaignBrief"
               placeholder="What type of content & influencer you're looking for"
-              className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-400 text-white focus:border-[#00CEC9] focus:outline-none resize-none h-24"
+              className={`w-full px-4 py-3 rounded-xl bg-transparent border ${
+                errors.campaignBrief ? "border-red-500" : "border-gray-400"
+              } text-white focus:border-[#00CEC9] focus:outline-none resize-none h-24`}
               maxLength={150}
               value={formData.campaignBrief}
               onChange={handleInputChange}
             />
-            <p
-              id="direct-campaignBrief-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              Campaign brief is required
-            </p>
+            {errors.campaignBrief && (
+              <p className="text-xs text-red-500 mt-1">{errors.campaignBrief}</p>
+            )}
           </div>
-          <label className="block text-xs text-white">
-            Select Niche
-          </label>
+          <label className="block text-xs text-white">Select Niche</label>
           <div className="flex flex-wrap gap-2">
             {contentTypeCategories.map((category) => (
               <button
@@ -535,20 +428,19 @@ export function DirectOfferForm({
               </button>
             ))}
           </div>
+          {errors.niche && (
+            <p className="text-xs text-red-500 mt-1">{errors.niche}</p>
+          )}
           <div>
             <label className="block text-xs text-white mb-2">Platform</label>
             <PlatformButtons
               selectedPlatforms={selectedPlatforms}
               onPlatformToggle={handlePlatformToggle}
             />
-            <p
-              id="direct-platforms-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              Please select at least one platform
-            </p>
+            {errors.platforms && (
+              <p className="text-xs text-red-500 mt-1">{errors.platforms}</p>
+            )}
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               <div>
@@ -560,7 +452,6 @@ export function DirectOfferForm({
                   onChange={(date) => handleCampaignDateChange("start", date)}
                 />
               </div>
-
               <div>
                 <label className="block text-xs text-white mb-1">
                   Campaign End Date
@@ -568,17 +459,14 @@ export function DirectOfferForm({
                 <DatePicker
                   value={getCampaignEndDate()}
                   onChange={(date) => handleCampaignDateChange("end", date)}
-                  minDate={getCampaignStartDate() || new Date()}
                 />
               </div>
-              <p
-                id="direct-campaignDuration-error"
-                className="text-xs text-red-500 mt-1 hidden"
-              >
-                Both campaign start and end dates are required
-              </p>
+              {errors.campaignDuration && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.campaignDuration}
+                </p>
+              )}
             </div>
-
             <div className="relative">
               <label
                 htmlFor="postDeadline"
@@ -596,20 +484,18 @@ export function DirectOfferForm({
                   handleInputChange({
                     target: {
                       name: "postDeadline",
-                      value: date ? date.toISOString().split("T")[0] : "",
+                      value: date,
                     },
-                  })
+                  } as any)
                 }
               />
-              <p
-                id="direct-postDeadline-error"
-                className="text-xs text-red-500 mt-1 hidden"
-              >
-                Post deadline is required
-              </p>
+              {errors.postDeadline && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.postDeadline}
+                </p>
+              )}
             </div>
           </div>
-
           <div className="flex items-center gap-2">
             <Checkbox
               id="agreeToTerms"
@@ -629,15 +515,11 @@ export function DirectOfferForm({
               </Link>
             </label>
           </div>
-          <p
-            id="direct-terms-error"
-            className="text-xs text-red-500 mt-1 hidden"
-          >
-            You must agree to the terms and conditions
-          </p>
+          {errors.agreeToTerms && (
+            <p className="text-xs text-red-500 mt-1">{errors.agreeToTerms}</p>
+          )}
         </div>
       )}
-
       {currentStep === 2 && (
         <div className="space-y-6 animate-fadeIn">
           <div>
@@ -652,18 +534,16 @@ export function DirectOfferForm({
               id="direct-campaignGoal"
               name="campaignGoal"
               placeholder="E.g., Promote a product, boost brand awareness, increase sales"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border ${
+                errors.campaignGoal ? "border-red-500" : "border-gray-400"
+              } text-white focus:border-[#00CEC9]`}
               value={formData.campaignGoal}
               onChange={handleInputChange}
             />
-            <p
-              id="direct-campaignGoal-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              Campaign goal is required
-            </p>
+            {errors.campaignGoal && (
+              <p className="text-xs text-red-500 mt-1">{errors.campaignGoal}</p>
+            )}
           </div>
-
           <div>
             <label
               htmlFor="requirements"
@@ -676,18 +556,16 @@ export function DirectOfferForm({
               id="direct-requirements"
               name="requirements"
               placeholder="E.g., 1 Instagram Reel + 2 Stories"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border ${
+                errors.requirements ? "border-red-500" : "border-gray-400"
+              } text-white focus:border-[#00CEC9]`}
               value={formData.requirements}
               onChange={handleInputChange}
             />
-            <p
-              id="direct-requirements-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              Requirements are required
-            </p>
+            {errors.requirements && (
+              <p className="text-xs text-red-500 mt-1">{errors.requirements}</p>
+            )}
           </div>
-
           <div>
             <label
               htmlFor="captionGuidelines"
@@ -700,20 +578,18 @@ export function DirectOfferForm({
               id="direct-captionGuidelines"
               name="captionGuidelines"
               placeholder="E.g., Mention our brand and use #OurHashtag"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border ${
+                errors.captionGuidelines ? "border-red-500" : "border-gray-400"
+              } text-white focus:border-[#00CEC9]`}
               value={formData.captionGuidelines}
               onChange={handleInputChange}
             />
-            <p
-              id="direct-captionGuidelines-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              Caption guidelines are required
-            </p>
+            {errors.captionGuidelines && (
+              <p className="text-xs text-red-500 mt-1">{errors.captionGuidelines}</p>
+            )}
           </div>
         </div>
       )}
-
       {currentStep === 3 && (
         <div className="space-y-6 animate-fadeIn">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -738,6 +614,9 @@ export function DirectOfferForm({
                   <SelectItem value="commission">Commission</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.collaborationType && (
+                <p className="text-xs text-red-500 mt-1">{errors.collaborationType}</p>
+              )}
             </div>
             <div className="relative">
               <label
@@ -755,18 +634,15 @@ export function DirectOfferForm({
                 id="direct-totalPayment"
                 name="totalPayment"
                 placeholder="Enter Total Payment"
-                className="w-full pl-8 rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+                className={`w-full pl-8 rounded-full bg-transparent border ${
+                  errors.totalPayment ? "border-red-500" : "border-gray-400"
+                } text-white focus:border-[#00CEC9]`}
                 value={formData.totalPayment}
                 onChange={handleInputChange}
               />
-              <p
-                id="direct-totalPayment-error"
-                className="text-xs text-red-500 mt-1 hidden"
-              >
-                <span id="direct-totalPayment-error-text">
-                  Total payment is required
-                </span>
-              </p>
+              {errors.totalPayment && (
+                <p className="text-xs text-red-500 mt-1">{errors.totalPayment}</p>
+              )}
               <p className="text-xs text-gray-400 mt-1">
                 This amount will remain private and is only visible to accepted
                 creators. Held securely in escrow until job completion.
@@ -775,7 +651,6 @@ export function DirectOfferForm({
           </div>
           <div className="mt-8">
             <h3 className="text-white text-lg mb-4">Collaboration Terms</h3>
-
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -795,7 +670,6 @@ export function DirectOfferForm({
                 </label>
                 <span className="text-xs text-white">Content approval</span>
               </div>
-
               <div className="flex items-center gap-2">
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -820,7 +694,6 @@ export function DirectOfferForm({
           </div>
         </div>
       )}
-
       {currentStep === 4 && (
         <div className="space-y-6 animate-fadeIn">
           <div>
@@ -832,18 +705,16 @@ export function DirectOfferForm({
               id="direct-tagUs"
               name="tagUs"
               placeholder="@BrandHandle"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border ${
+                errors.tagUs ? "border-red-500" : "border-gray-400"
+              } text-white focus:border-[#00CEC9]`}
               value={formData.tagUs}
               onChange={handleInputChange}
             />
-            <p
-              id="direct-tagUs-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              Tag information is required
-            </p>
+            {errors.tagUs && (
+              <p className="text-xs text-red-500 mt-1">{errors.tagUs}</p>
+            )}
           </div>
-
           <div>
             <label htmlFor="hashtags" className="block text-xs text-white mb-1">
               Required Hashtags
@@ -853,8 +724,10 @@ export function DirectOfferForm({
               onAddHashtag={addHashtag}
               onRemoveHashtag={removeHashtag}
             />
+            {errors.hashtags && (
+              <p className="text-xs text-red-500 mt-1">{errors.hashtags}</p>
+            )}
           </div>
-
           <div>
             <label
               htmlFor="keepItAuthentic"
@@ -867,18 +740,16 @@ export function DirectOfferForm({
               id="direct-keepItAuthentic"
               name="keepItAuthentic"
               placeholder="E.g., Be yourself, make it engaging"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border ${
+                errors.keepItAuthentic ? "border-red-500" : "border-gray-400"
+              } text-white focus:border-[#00CEC9]`}
               value={formData.keepItAuthentic}
               onChange={handleInputChange}
             />
-            <p
-              id="direct-keepItAuthentic-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              This field is required
-            </p>
+            {errors.keepItAuthentic && (
+              <p className="text-xs text-red-500 mt-1">{errors.keepItAuthentic}</p>
+            )}
           </div>
-
           <div>
             <label htmlFor="dontDo" className="block text-xs text-white mb-1">
               Don't Do
@@ -888,20 +759,18 @@ export function DirectOfferForm({
               id="direct-dontDo"
               name="dontDo"
               placeholder="E.g., No competitor mentions, no misleading claims"
-              className="w-full rounded-full bg-transparent border border-gray-400 text-white focus:border-[#00CEC9]"
+              className={`w-full rounded-full bg-transparent border ${
+                errors.dontDo ? "border-red-500" : "border-gray-400"
+              } text-white focus:border-[#00CEC9]`}
               value={formData.dontDo}
               onChange={handleInputChange}
             />
-            <p
-              id="direct-dontDo-error"
-              className="text-xs text-red-500 mt-1 hidden"
-            >
-              This field is required
-            </p>
+            {errors.dontDo && (
+              <p className="text-xs text-red-500 mt-1">{errors.dontDo}</p>
+            )}
           </div>
         </div>
       )}
-
       <NavigationButtons
         showBack={currentStep > 1}
         onBack={prevStep}

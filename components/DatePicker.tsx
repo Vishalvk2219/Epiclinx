@@ -1,19 +1,23 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 interface DatePickerProps {
-  value?: Date
-  onChange: (date: Date | undefined) => void
-  placeholder?: string
-  className?: string
+  value?: Date;
+  onChange: (date: Date | undefined) => void;
+  placeholder?: string;
+  className?: string;
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({
@@ -22,7 +26,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   placeholder = "Pick a date",
   className = "",
 }) => {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -44,12 +50,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           mode="single"
           selected={value}
           onSelect={(date) => {
-            onChange(date)
-            setOpen(false)
+            onChange(date);
+            setOpen(false);
           }}
           initialFocus
+          disabled={(date) => date < today}
         />
       </PopoverContent>
     </Popover>
-  )
-}
+  );
+};
