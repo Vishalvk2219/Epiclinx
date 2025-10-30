@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt from '@tsndr/cloudflare-worker-jwt';
 import { cookies } from "next/headers";
 
 export async function verifyToken() {
@@ -13,8 +13,12 @@ export async function verifyToken() {
     //   );
     // const token = cookies["token"];
     const token = cookieStore.get("authToken")?.value;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-    return decoded;
+    const isValid = jwt.verify(token, process.env.JWT_SECRET as string);
+    if(!isValid){
+      return null
+    }
+    const decoded = jwt.decode(token)
+    return decoded?.payload || null;
   } catch (error:any) {
     return null;
   }

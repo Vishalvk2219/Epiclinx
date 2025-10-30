@@ -46,6 +46,7 @@ const followerSizes = [
   "50,000 to 250,000",
   "250,000+",
 ];
+
 const platformsList = [
   "TikTok",
   "Instagram",
@@ -329,7 +330,6 @@ export default function FilterSidebar({
           </div>
         </div>
         <hr className="my-4 border-gray-300 dark:border-gray-600" />
-        //jobType
         {jobType && (
           <div className="flex flex-col gap-2 mt-4">
             <label className="text-sm font-medium text-white">Job Type</label>

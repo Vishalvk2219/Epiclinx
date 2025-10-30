@@ -31,7 +31,7 @@ export function NextChapter() {
                 Campaigns
               </Link>
               <Link
-                href="/brand/post-a-job"
+                href="/dashboard/brand/post-a-job"
                 className="w-full md:w-auto flex h-12 items-center justify-center bg-[#00E5C7] hover:bg-[#00E5C7]/90 text-[#2A2A2A] font-medium rounded-full px-6 py-2 text-center"
               >
                 Post a job

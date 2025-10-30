@@ -2,40 +2,84 @@ import User from "@/models/User";
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/connect-db";
 
-export async function POST(req:Request){ 
-    try{
-        connectDB()
-        const body = await req.json();
-        const user = await User.findOne({email:body.email})
-        const auth = true // temporary condition should be replaced with a auth token
-        if (user){
-            if (auth){
-                Object.assign(user,body)
-                await user.save()
+export async function POST(req: Request) {
+  try {
+    await connectDB();
+    const body = await req.json();
 
-                return NextResponse.json(
-                    {success:true, user},
-                    {status:200}
-                )
-            }
-            return NextResponse.json(
-                {success:false,error:"User already exists"},
-                {status:400}
-            )
+    const {
+      profileImageUrl,
+      firstName,
+      lastName,
+      email,
+      phone,
+      displayName,
+      location,
+      instagram,
+      facebook,
+      tiktok,
+      otherSocial,
+      categories,
+      companyName,
+      shopAddress,
+      businessWebsite,
+      businessDescription,
+      role,
+      followers,
+    } = body;
+
+    const payload = {
+      profileImageUrl,
+      firstName,
+      lastName,
+      email,
+      phone,
+      displayName,
+      location,
+      instagram,
+      facebook,
+      tiktok,
+      otherSocial,
+      categories,
+      companyName,
+      shopAddress,
+      businessWebsite,
+      businessDescription,
+      role,
+      followers,
+    };
+
+    const user = await User.findOne({ email });
+    const auth = true;
+
+    if (user) {
+      if (!auth) {
+        return NextResponse.json(
+          { success: false, error: "Unauthorized" },
+          { status: 403 }
+        );
+      }
+
+      Object.keys(payload).forEach((key) => {
+        if (payload[key as keyof typeof payload] !== undefined) {
+          user[key] = payload[key as keyof typeof payload];
         }
-        const newUser = new User(body)
-        await newUser.save()
+      });
 
-        return NextResponse.json(
-            {success:true, data: newUser},
-            {status:201}
-        )
-        
-    }catch(error:any){
-        console.log("Error Creating User:",error)
-        return NextResponse.json(
-            {success:false,error:error.message || "Internal server error"},
-            {status:500}
-        )
+      await user.save();
+
+      return NextResponse.json({ success: true, user }, { status: 200 });
     }
+
+    const newUser = new User(payload);
+    await newUser.save();
+
+    return NextResponse.json({ success: true, user: newUser }, { status: 201 });
+  } catch (error: any) {
+    console.error("Error Creating User:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Internal server error" },
+      { status: 500 }
+    );
+  }
 }

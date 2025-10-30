@@ -167,7 +167,7 @@ const Navbar = () => {
 
             {/* Post a Job Button */}
             <Link
-              href="/brand/post-a-job"
+              href="/dashboard/brand/post-a-job"
               className="hidden md:flex items-center gap-2 bg-epiclinx-teal hover:bg-epiclinx-teal/90 text-black px-5 py-2 rounded-full text-sm transition-all"
             >
               Post a Job
@@ -291,7 +291,7 @@ const Navbar = () => {
             <NavMenuItem href="/dashboard/brand/campaigns">
               Campaign
             </NavMenuItem>
-            <NavMenuItem href="/brand/post-a-job">Post a Job</NavMenuItem>
+            <NavMenuItem href="/dashboard/brand/post-a-job">Post a Job</NavMenuItem>
           </div>
 
           {/* Contact section */}

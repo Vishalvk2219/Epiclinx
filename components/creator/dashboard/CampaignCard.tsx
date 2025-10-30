@@ -10,13 +10,18 @@ import Image from "next/image";
 import { PiInstagramLogoFill, PiTiktokLogoFill } from "react-icons/pi";
 import { FaSackDollar } from "react-icons/fa6";
 import { apiFetch } from "@/lib/api";
+import { PlatformIcons } from "@/components/ui/platformIcons";
 
-export default function CampaignCard({ campaignId }:{campaignId : string | null}) {
+export default function CampaignCard({
+  campaignId,
+}: {
+  campaignId: string | null;
+}) {
   const [campaign, setCampaign] = useState<any | null>(null);
 
   // const campaign = campaignsData.find((c) => c.id === campaignId);
   const [showMore, setShowMore] = useState(false);
-  
+
   useEffect(() => {
     const fetchJobData = async () => {
       const response = await apiFetch(`/jobs/${campaignId}`);
@@ -108,54 +113,7 @@ export default function CampaignCard({ campaignId }:{campaignId : string | null}
               <h2 className="text-xl font-bold text-gray-900">
                 {campaign.title}
               </h2>
-              <div className="flex space-x-2">
-                {campaign.platforms?.map((platform, index) => {
-                  const name = platform.toLowerCase();
-
-                  // Define all supported platforms once
-                  const platformMap = {
-                    instagram: {
-                      icon: (
-                        <PiInstagramLogoFill className="w-5 h-5 text-black/80" />
-                      ),
-                      url: "https://www.instagram.com",
-                    },
-                    tiktok: {
-                      icon: (
-                        <PiTiktokLogoFill className="w-5 h-5 text-black/80" />
-                      ),
-                      url: "https://www.tiktok.com",
-                    },
-                    youtube: {
-                      icon: <FaYoutube className="w-5 h-5 text-black/80" />,
-                      url: "https://www.youtube.com",
-                    },
-                    facebook: {
-                      icon: <FaFacebook className="w-5 h-5 text-black/80" />,
-                      url: "https://www.facebook.com",
-                    },
-                  };
-
-                  const platformData = platformMap[name];
-
-                  if (!platformData) return null; // skip unsupported ones
-
-                  return (
-                    <div
-                      key={index}
-                      className="w-8 h-8 rounded-full bg-epiclinx-semiteal flex items-center justify-center"
-                    >
-                      <a
-                        href={platformData.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {platformData.icon}
-                      </a>
-                    </div>
-                  );
-                })}
-              </div>
+              <PlatformIcons platforms={campaign.platforms} />{" "}
             </div>
 
             {campaign.status ? (
@@ -252,10 +210,12 @@ export default function CampaignCard({ campaignId }:{campaignId : string | null}
               <DollarSign className="w-5 h-5 text-black/80" />
               <span>{campaign.collaborationType}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="w-5 h-5 text-black/80" />
-              <span>{campaign.campaignDuration}</span>
-            </div>
+            {campaign.camapignDuration && (
+              <div className="flex items-center gap-1">
+                <Calendar className="w-5 h-5 text-black/80" />
+                <span>{campaign.campaignDuration}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -317,7 +277,7 @@ export function transformJobData(job) {
           .filter(Boolean)
       : [];
 
-  const postDeadline = "2025-12-25T23:59:59+05:30";
+  const postDeadline = job.postDeadline;
   const endDate = Date.parse(postDeadline);
   const now = new Date().getTime();
   const remainingSeconds = Math.max(0, Math.floor((endDate - now) / 1000));
@@ -327,13 +287,16 @@ export function transformJobData(job) {
     logo: job.companyId.profileImageUrl,
     icon: job.icon || "gavel",
     title: job.campaignName,
-    status: "",
+    status: job.status,
     shortDescription: job.campaignBrief,
     creatorType: followerRanges[job.followerSize],
     contentType: job.contentType || "UGC",
     collaborationType: job.collaborationType,
-    campaignDuration: job.campaignDuration || "2025-12-10 to 2025-12-25",
-    postDeadline: "2025-12-25",
+    campaignDuration:
+      job.JobType === "direct"
+        ? `${job.campaignStartDate} - ${job.campaignEndDate}`
+        : "",
+    postDeadline: job.postDeadline,
     longDescription: {
       goal: job.campaignGoal,
       typeOfContent: splitByCommaOrNewline(job.requirements),
@@ -346,45 +309,3 @@ export function transformJobData(job) {
     remainingSeconds,
   };
 }
-
-// // data/campaignsData.js
-// export const campaignsData = [
-//   {
-//     id: "AD204",
-//     icon: "gavel",
-//     status: "inprogress",
-//     title: "EcoGlow – Spring Launch – Instagram – #AD204",
-//     shortDescription:
-//       "EcoGlow is on the hunt for passionate and creative content creators who love skincare and value sustainability. We're launching our new Vitamin C + Sea Kelp Serum and want YOU to help us spread the word!",
-//     longDescription: {
-//       goal:
-//         "Raise awareness about the launch of our new serum, showcase its natural ingredients and eco-friendly packaging, and drive traffic to our website for first-time purchases.",
-//       typeOfContent: [
-//         "1 Instagram Reel (Unboxing + first impressions + application routine)",
-//         "2 Instagram Stories (1x product intro, Day 3: update or mini review)"
-//       ],
-//       captionGuidelines: [
-//         "Include your honest thoughts and personal experience.",
-//         "Mention the ingredients: Vitamin C, Sea Kelp, and Hyaluronic Acid.",
-//         "Include these hashtags: #EcoGlowPartner #GlowWithNature #SkincareThatCares",
-//         "Tag @ecoglowskin in both the Reel and Stories.",
-//         "Add a CTA: “Shop now via the link in my bio and use code GLOW20 for 20% off!”"
-//       ],
-//       dontDo: [
-//         "Don’t apply filters that alter the color of the product or your skin tone.",
-//         "Don’t make any fictional or exaggerated claims (e.g. “cures acne overnight”).",
-//         "Don’t mention or compare other skincare brands.",
-//         "Don’t include unrelated products or promos in the same post.",
-//         "Don’t post before content is approved by our team."
-//       ]
-//     },
-//     payment: "$3,000",
-//     creatorType: "Nano (1,000 – 10,000 followers)",
-//     platform: "Instagram",
-//     format: "UGC",
-//     paymentType: "Paid",
-//     dateRange: "04/11/2025–04/20/2025",
-//     remainingDays: 7,
-//     remainingSeconds: 264457
-//   }
-// ];

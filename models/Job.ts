@@ -1,4 +1,5 @@
-import { Schema, model, Document, models, Types } from "mongoose";
+import mongoose from "mongoose";
+import { Schema,  Document, Types } from "mongoose";
 
 export interface IJob extends Document {
   campaignImageUrl:string
@@ -30,7 +31,7 @@ export interface IJob extends Document {
   offerType: string;
   jobType: string;
   companyId:Types.ObjectId;
-  status:string;
+  status:"Pending Applications"|"Accepted Jobs"|"Jobs In Progress"|"Submitted Jobs"|"Completed Jobs"|"Declined Jobs"
   applicants:Types.ObjectId[];
   bids:Types.ObjectId[];
   icon:string;
@@ -79,5 +80,5 @@ const JobSchema = new Schema<IJob>(
   { timestamps: true }
 );
 
-const JobModel = models.Job || model<IJob>("Job", JobSchema);
+const JobModel = mongoose.models.Job || mongoose.model<IJob>("Job", JobSchema);
 export default JobModel

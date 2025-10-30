@@ -70,6 +70,7 @@ export function MultiStepForm() {
     currency: currency || "",
     recurring_interval: recurring_interval || "",
     trial: trial ? 1 : 0,
+    followers:0
   };
 
   const [formData, setFormData] = useState(defaultFormData);
@@ -82,7 +83,7 @@ export function MultiStepForm() {
       searchParams.get("currency") &&
       searchParams.get("plan") &&
       searchParams.get("recurring_interval")
-    ) {
+    ) { 
       localStorage.removeItem(LOCAL_KEY);
       router.replace(pathname); // remove query params from URL
       setShowRestoredMsg(false);
@@ -284,6 +285,7 @@ export function MultiStepForm() {
                       businessWebsite: dataFromChild.businessWebsite,
                       businessDescription: dataFromChild.businessDescription,
                       role: formData.role,
+                      followers:formData.followers,
                     };
                     const response = await apiPost<{
                       user: any;

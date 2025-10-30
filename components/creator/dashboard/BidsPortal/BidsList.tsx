@@ -1,109 +1,312 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
-import { PiInstagramLogoFill, PiTiktokLogoFill } from "react-icons/pi"
-import { FaYoutube } from "react-icons/fa"
-import JobFilter, { JobFilterValues } from "../BrowseJobs/JobFilter"
-import { Search } from "lucide-react"
-import Image from "next/image"
-import { Separator } from "@/components/ui/separator"
-
-// Mock data for offers
-const mockOffers = [
-    { id: 1, creator: "Creator #1", offer: 2500 },
-    { id: 2, creator: "Creator #2", offer: 3000 },
-    { id: 3, creator: "Creator #3", offer: 2200 },
-    { id: 4, creator: "Creator #4", offer: 3200 },
-    { id: 5, creator: "Creator #5", offer: 2900 },
-    { id: 6, creator: "Creator #6", offer: 3100 },
-    { id: 7, creator: "Creator #7", offer: 2800 },
-    { id: 8, creator: "Creator #8", offer: 3300 },
-]
-
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { Calendar, Search, Target, ChevronLeft, ChevronRight } from "lucide-react";
+import { apiFetch } from "@/lib/api";
+import { Separator } from "@/components/ui/separator";
+import { PlatformIcons } from "@/components/ui/platformIcons";
+import Link from "next/link";
+import BidFilter, { BidFilterValues } from "./BidFilter";
+import { cn } from "@/lib/utils";
 
 export function BidssList() {
-    const [offers] = useState(mockOffers)
-    const [searchTerm, setSearchTerm] = useState("")
-    const [filters, setFilters] = useState<JobFilterValues>({
-        sort: "Most Recent",
-        location: "",
-        niches: [],
-        platforms: ["ALL"] ,
-        deliverables: [],
+  const [bids, setBids] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<BidFilterValues>({
+    sort: "Most Recent",
+    location: "",
+    niches: [],
+    platforms: ["All"],
+    deliverables: [],
+    bidStatus: "All",
+  });
+
+  const itemsPerPage = 6;
+
+  const filteredBids = bids
+    .filter((bid) => {
+      if (
+        searchTerm &&
+        !(
+          (bid.campaignName &&
+            bid.campaignName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (bid.brandName &&
+            bid.brandName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (bid.description &&
+            bid.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        filters.bidStatus !== "All" &&
+        bid.bidStatus.toLowerCase() !== filters.bidStatus.toLowerCase()
+      ) {
+        return false;
+      }
+
+      if (
+        filters.location &&
+        bid.location?.toLowerCase() !== filters.location.toLowerCase()
+      ) {
+        return false;
+      }
+
+      if (
+        filters.niches.length > 0 &&
+        !bid.niche?.some((n: string) => filters.niches.includes(n))
+      ) {
+        return false;
+      }
+
+      if (
+        !filters.platforms.includes("All") &&
+        !bid.campaignPlatforms.some((p: string) =>
+          filters.platforms.map((fp) => fp.toLowerCase()).includes(p.toLowerCase())
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        filters.deliverables.length > 0 &&
+        !bid.deliverables?.some((d: string) => filters.deliverables.includes(d))
+      ) {
+        return false;
+      }
+
+      return true;
     })
+    .sort((a, b) => {
+      if (filters.sort === "Most Recent") {
+        return new Date(b.bidCreatedAt).getTime() - new Date(a.bidCreatedAt).getTime();
+      } else if (filters.sort === "Highest Bid") {
+        return Number.parseInt(b.bidAmount) - Number.parseInt(a.bidAmount);
+      } else if (filters.sort === "Lowest Bid") {
+        return Number.parseInt(a.bidAmount) - Number.parseInt(b.bidAmount);
+      } else if (filters.sort === "Deadline") {
+        const dateA = new Date(a.deadline || 0).getTime();
+        const dateB = new Date(b.deadline || 0).getTime();
+        const safeDateA = isNaN(dateA) ? Infinity : dateA;
+        const safeDateB = isNaN(dateB) ? Infinity : dateB;
+        return safeDateA - safeDateB;
+      }
+      return 0;
+    });
 
-    const handleApplyFilters = (newFilters: JobFilterValues) => {
-        setFilters(newFilters)
-        setCurrentPage(1) // Reset to first page when filters change
+  const totalPages = Math.ceil(filteredBids.length / itemsPerPage);
+  const currentBids = filteredBids.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
     }
+  };
 
-    const [currentPage, setCurrentPage] = useState(1)
-    const itemsPerPage = 8
-    const currentJobs = offers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const handleApplyFilters = (newFilters: BidFilterValues) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
 
-    return (
-        <div className="">
-            <div className="flex items-center justify-between my-5">
-                <h2 className="text-2xl font-bold">Bids Portal</h2>
-            </div>
-            <div className="flex items-center  gap-3 w-full">
-                <JobFilter onApply={handleApplyFilters} />
-                <div className="relative w-full">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-100" />
-                    <input
-                        type="text"
-                        placeholder="Search"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="rounded-full py-2 pl-10 w-full pt-3 pr-4 text-sm bg-transparent border border-gray-400 text-white"
-                    />
-                </div>
-            </div>
-            <div className="flex justify-between items-center mb-4 mt-4">
-                <div className="text-sm text-gray-400">{offers.length} offers received</div>
-            </div>
+  const fetchBids = async () => {
+    try {
+      setLoading(true);
+      const response = await apiFetch("/bids/fetch-all-jobs");
+      if (response.success) {
+        const formattedBids = response.allApplications.map((bid: any) => ({
+          bidId: bid._id,
+          bidAmount: bid.amount,
+          bidStatus: bid.status,
+          bidCreatedAt: bid.createdAt,
+          campaignId: bid.jobId?._id?.toString() || "",
+          campaignName: bid.jobId?.campaignName,
+          campaignGoal: bid.jobId?.campaignGoal,
+          campaignPlatforms: bid.jobId?.selectedPlatforms || [],
+          brandName: bid.jobId?.companyId?.companyName,
+          brandLogo: bid.jobId?.companyId?.profileImageUrl,
+          location: bid.jobId?.location || "",
+          niche: bid.jobId?.niche || [],
+          deliverables: bid.jobId?.deliverables || [],
+          deadline: bid.jobId?.deadline || null,
+          description: bid.jobId?.description || "",
+        }));
+        setBids(formattedBids);
+      }
+    } catch (err) {
+      console.error("Error fetching bids:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            <div className="space-y-3">
-                {offers.map((offer) => (
-                    <div key={offer.id} className="flex max-md:flex-col max-md:gap-5 bg-white/10 justify-between md:items-center p-5 rounded-3xl">
-                        <div className="flex items-start gap-2 ">
-                            <div className="flex flex-col gap-2">
-                                <div className="font-medium">{offer.creator}</div>
-                                <span className="text-epiclinx-teal max-md:hidden font-light text-xs ">Job AD: #{offer.id}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <div className="w-5 h-5 rounded-full bg-epiclinx-semiteal flex items-center justify-center"><PiInstagramLogoFill className="w-3 h-3 text-black/80" /></div>
-                                <div className="w-5 h-5 rounded-full bg-epiclinx-semiteal flex items-center justify-center"><PiTiktokLogoFill className="w-3 h-3 text-black/80" /></div>
-                                <div className="w-5 h-5 rounded-full bg-epiclinx-semiteal flex items-center justify-center"><FaYoutube className="w-3 h-3 text-black/80" /></div>
-                            </div>
-                        </div>
+  useEffect(() => {
+    fetchBids();
+  }, []);
 
-                        <div className="font-medium flex gap-10 md:px-5 items-center">
-                            <div className="flex flex-col gap-1">
-                                <div className="flex items-start gap-2">
-                                    <Image src={"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZWT5Z_gRV6MyfV5mYSEHX4eXXSa1-QH1d3Q&s"} alt="Brand Logo" width={20} height={20} className="rounded-full" />
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-epiclinx-teal font-light text-xs">Brand Name</span>
-                                        <span className="text-gray-100 font-light text-xs">Brand</span>
-                                    </div>
-                                </div>
+  if (loading)
+    return <p className="text-gray-300 text-center py-10">Loading your bids...</p>;
 
-                            </div>
-                            <Separator orientation="vertical" className="h-10 !bg-white/40" />
-                            <div className="flex items-center flex-col gap-2">
-                                <span className="text-epiclinx-teal font-medium text-sm">
-                                    ${offer.offer.toLocaleString()}
-                                </span>
-                                <span className="text-gray-100 font-light text-xs">Bid</span>
-                            </div>
+  if (bids.length === 0)
+    return <p className="text-gray-400 text-center py-10">No bids found.</p>;
 
-                        </div>
-
-                        <span className="text-epiclinx-teal md:hidden font-light text-xs ">Job AD: #{offer.id}</span>
-                    </div>
-                ))}
-            </div>
+  return (
+    <div>
+      <h2 className="text-2xl font-bold text-white mb-6">Bids Overview</h2>
+      <div className="flex items-center gap-3 w-full">
+        <BidFilter onApply={handleApplyFilters} />
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-100" />
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="rounded-full py-2 pl-10 w-full pt-3 pr-4 text-sm bg-transparent border border-gray-400 text-white"
+          />
         </div>
-    )
+      </div>
+
+      <div className="space-y-3 mt-6">
+        {currentBids.map((bid) => (
+          <div
+            key={bid.bidId}
+            className="flex justify-between items-center gap-6 bg-white/10 p-5 rounded-3xl hover:bg-white/15 transition-all flex-col md:flex-row w-full"
+          >
+            {/* Brand */}
+            <div className="flex items-center gap-3 min-w-[150px] w-full md:w-[200px] md:basis-1/4 flex-shrink-0">
+              <Image
+                src={bid.brandLogo || "https://via.placeholder.com/40"}
+                alt="Brand Logo"
+                width={45}
+                height={45}
+                className="rounded-full object-cover"
+              />
+              <span className="text-epiclinx-teal font-semibold text-sm truncate w-full md:w-auto">
+                <Link
+                  href={`/dashboard/creator/apply-for-job?id=${bid.campaignId}`}
+                  className="hover:underline"
+                >
+                  {bid.brandName || "Unknown Brand"}
+                </Link>
+              </span>
+            </div>
+
+            <Separator orientation="vertical" className="hidden md:block h-10 bg-white/40 mx-4" />
+
+            {/* Campaign Info */}
+            <div className="flex flex-col justify-center flex-1 md:w-[320px] w-full">
+              <Link
+                href={`/dashboard/creator/apply-for-job?id=${bid.campaignId}`}
+                className="font-medium hover:underline text-white"
+              >
+                {bid.campaignName || "Unnamed Campaign"}
+              </Link>
+              <div className="flex items-center gap-2 text-xs text-gray-300 mt-1">
+                <Target className="h-3 w-3 text-epiclinx-teal" />
+                <span>{bid.campaignGoal || "No goal"}</span>
+              </div>
+              <PlatformIcons platforms={bid.campaignPlatforms} />
+            </div>
+
+            <Separator orientation="vertical" className="hidden md:block h-10 bg-white/40 mx-4" />
+
+            {/* Bid Info */}
+            <div className="flex flex-col items-end md:items-center gap-1 md:w-[150px]">
+              <span className="text-epiclinx-teal font-medium text-lg">
+                ${bid.bidAmount || 0}
+              </span>
+              <span className="text-gray-400 text-xs flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {new Date(bid.bidCreatedAt).toLocaleDateString()}
+              </span>
+              <span
+                className={cn(
+                  "text-xs font-medium rounded-full px-3 py-1 border mt-1",
+                  bid.bidStatus === "accepted"
+                    ? "bg-epiclinx-teal text-black border-[#0ABAB5]"
+                    : bid.bidStatus === "rejected"
+                    ? "text-red-400 border-red-400"
+                    : "text-gray-400 border-gray-500"
+                )}
+              >
+                {bid.bidStatus === "accepted"
+                  ? "Accepted"
+                  : bid.bidStatus === "rejected"
+                  ? "Rejected"
+                  : "Pending"}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center mt-6 gap-2">
+          <button
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="flex items-center justify-center text-white font-light text-xs disabled:opacity-50 px-2"
+          >
+            <ChevronLeft size={16} className="mr-1" />
+            Previous
+          </button>
+
+          {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+            const pageNum = i + 1;
+            return (
+              <button
+                key={i}
+                onClick={() => goToPage(pageNum)}
+                className={cn(
+                  "w-6 h-6 flex items-center justify-center rounded-md",
+                  currentPage === pageNum
+                    ? "bg-epiclinx-teal text-[#2A2A2A]"
+                    : "text-xs text-white"
+                )}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+
+          {totalPages > 3 && (
+            <>
+              <span className="text-white">...</span>
+              {totalPages > 4 && (
+                <button
+                  onClick={() => goToPage(totalPages - 1)}
+                  className="w-6 h-6 flex items-center justify-center rounded-md bg-epiclinx-teal text-[#2A2A2A]"
+                >
+                  {totalPages - 1}
+                </button>
+              )}
+              <button
+                onClick={() => goToPage(totalPages)}
+                className="w-6 h-6 flex items-center justify-center rounded-md bg-epiclinx-teal text-[#2A2A2A]"
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+
+          <button
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="flex items-center justify-center text-white font-light text-xs disabled:opacity-50 px-2"
+          >
+            Next
+            <ChevronRight size={16} className="ml-1" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }

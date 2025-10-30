@@ -21,7 +21,7 @@ export async function GET(req: Request) {
         "profileImageUrl companyName"
       );
     } else if (decoded.role === "creator") {
-      jobs = await JobModel.find({}).populate(
+      jobs = await JobModel.find({status:"Pending Applications"}).sort({createdAt:-1}).populate(
         "companyId",
         "profileImageUrl companyName selectedContentTypes"
       );
@@ -48,3 +48,5 @@ export async function GET(req: Request) {
     );
   }
 }
+
+

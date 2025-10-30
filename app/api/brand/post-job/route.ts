@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    await connectDB();
+    connectDB();
     const body = await req.json();
     const payload = await verifyToken();
     const jobData = {
@@ -15,7 +15,6 @@ export async function POST(req: Request) {
     };
     try {
       const newJob = new JobModel(jobData);
-      console.log(newJob);
       await newJob.save();
 
       return NextResponse.json(

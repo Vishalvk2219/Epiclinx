@@ -17,7 +17,7 @@ const Page = () => {
         <div className='flex items-center justify-between mb-6 mt-20'>
           <div>
             <h2 className='text-2xl font-semibold'>{activeSection === "jobs" ? "All Jobs" : "Messages"}</h2>
-            <p className='text-xs font-light my-4 -mb-3'>{activeSection === "jobs" ? "200 completed jobs found" : ""}</p>
+            {/* <p className='text-xs font-light my-4 -mb-3'>{activeSection === "jobs" ? "200 completed jobs found" : ""}</p> */}
           </div>
 
           <div className="flex rounded-full bg-[#3A3A3A] p-1">

@@ -1,4 +1,3 @@
-import { create } from "zustand";
 import { verifyToken } from "@/lib/verify-token";
 import { NextResponse } from "next/server";
 import BidModel from "@/models/Bids";
@@ -21,10 +20,7 @@ export async function GET(req: Request) {
         { status: 403 }
       );
     }
-    const bids = await BidModel.find({ jobId: jobId }).populate(
-      "creatorId"
-    );
-    console.log("........",bids)
+    const bids = await BidModel.find({ jobId: jobId }).populate("creatorId");
     return NextResponse.json({ success: true, bids }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
@@ -52,7 +48,11 @@ export async function POST(req: Request) {
       creatorId: decodedJWT.id,
     });
 
-    await JobModel.findOneAndUpdate({id:jobId},{$push:{bids:newBid._id}})
+    await JobModel.findOneAndUpdate(
+      { _id: jobId },
+      { $push: { bids: newBid._id },$set:{status:"Pending Jobs"} },
+      { new: true }
+    );
     return NextResponse.json(
       {
         success: true,

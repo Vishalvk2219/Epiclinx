@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
 import { PiInstagramLogoFill, PiTiktokLogoFill } from "react-icons/pi";
 import { FaYoutube } from "react-icons/fa";
 import Link from "next/link";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiPut } from "@/lib/api";
+import { PlatformIcons } from "@/components/ui/platformIcons";
 
 type FilterState = {
   categories: string[];
@@ -48,6 +49,7 @@ type Creator = {
 export default function InfluencerList({ jobId }) {
   const pagination = false;
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
     followers: [],
@@ -64,7 +66,9 @@ export default function InfluencerList({ jobId }) {
       try {
         const bidsData = await apiFetch(`/bids?id=${jobId}`);
         const requiredFieldBids = bidsData.bids.map((bids) => ({
+          bidId: bids._id,
           id: bids.creatorId._id,
+          bidStatus: bids.status,
           name: bids.creatorId.username || bids.creatorId.firstName,
           avatar: bids.creatorId.profileImageUrl,
           rating: bids.creatorId.rating || 0,
@@ -74,7 +78,16 @@ export default function InfluencerList({ jobId }) {
           categories: bids.creatorId.categories || [],
           tags: bids.creatorId.categories || [],
           proposal: bids.proposal,
-          platforms: bids.creatorId.platforms || [],
+          platformsWithLinks: {
+            instagram: bids.creatorId.instagram || "",
+            facebook: bids.creatorId.facebook || "",
+            tiktok: bids.creatorId.tiktok || "",
+            other: bids.creatorId.otherSocial || "",
+          },
+          platforms: ["instagram", "facebook", "tiktok", "other"].filter(
+            (p) =>
+              bids.creatorId[p] || (p === "other" && bids.creatorId.otherSocial)
+          ),
           unlocked: bids.creatorId.unlocked || false,
         }));
         setCreators(requiredFieldBids);
@@ -94,7 +107,9 @@ export default function InfluencerList({ jobId }) {
       const categoryMatch = creator.categories.some((cat) =>
         cat.toLowerCase().includes(searchLower)
       );
-      const locationMatch = creator.location.toLowerCase().includes(searchLower);
+      const locationMatch = creator.location
+        .toLowerCase()
+        .includes(searchLower);
 
       if (!nameMatch && !categoryMatch && !locationMatch) {
         return false;
@@ -113,13 +128,25 @@ export default function InfluencerList({ jobId }) {
       let matchesFollowerSize = false;
 
       for (const range of filters.followers) {
-        if (range === "1000 to 10,000" && followerCount >= 1000 && followerCount <= 10000) {
+        if (
+          range === "1000 to 10,000" &&
+          followerCount >= 1000 &&
+          followerCount <= 10000
+        ) {
           matchesFollowerSize = true;
           break;
-        } else if (range === "10,000 to 50,000" && followerCount > 10000 && followerCount <= 50000) {
+        } else if (
+          range === "10,000 to 50,000" &&
+          followerCount > 10000 &&
+          followerCount <= 50000
+        ) {
           matchesFollowerSize = true;
           break;
-        } else if (range === "50,000 to 250,000" && followerCount > 50000 && followerCount <= 250000) {
+        } else if (
+          range === "50,000 to 250,000" &&
+          followerCount > 50000 &&
+          followerCount <= 250000
+        ) {
           matchesFollowerSize = true;
           break;
         } else if (range === "250,000+" && followerCount > 250000) {
@@ -143,7 +170,10 @@ export default function InfluencerList({ jobId }) {
       return false;
     }
 
-    if (filters.location && creator.location.toLowerCase() !== filters.location.toLowerCase()) {
+    if (
+      filters.location &&
+      creator.location.toLowerCase() !== filters.location.toLowerCase()
+    ) {
       return false;
     }
 
@@ -203,23 +233,57 @@ export default function InfluencerList({ jobId }) {
     }
   };
 
+  // Handles bid action (accept/reject) by calling the backend route to update bid and job status.
+
+  async function handleBid(
+    bidId: string,
+    jobId: string,
+    status: "accepted" | "rejected"
+  ) {
+    try {
+      if (!bidId || !jobId || !status) {
+        throw new Error("Missing required parameters");
+      }
+
+      const response = await apiPut("/bids/handle-bid", {
+        bidId,
+        jobId,
+        status,
+      });
+
+      if (!response || !response.success) {
+        throw new Error(response?.message || "Failed to update bid status");
+      }
+      setCreators((prev) =>
+        prev.map((creator) =>
+          creator.bidId === bidId ? { ...creator, bidStatus: status } : creator
+        )
+      );
+      console.log(`Bid ${status} successfully`);
+      return response;
+    } catch (error: any) {
+      console.error("Error handling bid:", error.message || error);
+      throw error;
+    }
+  }
+
   return (
     <div className="space-y-4 md:mt-20 max-md:mt-10">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Your offers are in</h2>
       </div>
-      
+
       <div className="mb-6 flex items-center gap-3">
         <FilterSidebar
-          customStyle={
-            pagination
-              ? "border border-gray-400 text-white"
-              : "border border-gray-700 text-black"
-          }
-          onApply={(newFilters) => {
-            setFilters(newFilters);
-            setCurrentPage(1);
-          }}
+          openSidebar={() => setSidebarOpen(true)}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          categories={filters.categories}
+          followers={filters.followers}
+          platforms={filters.platforms}
+          location={filters.location}
+          featured={filters.featured}
+          onChange={(newFilters) => setFilters(newFilters)}
         />
         <div className="relative flex-1">
           <Search
@@ -283,15 +347,10 @@ export default function InfluencerList({ jobId }) {
                     <h3 className="font-medium text-white">
                       {influencer.name}
                     </h3>
-                    <div className="h-8 w-8 bg-white/20 rounded-full flex items-center justify-center place-content-center">
-                      <PiInstagramLogoFill className="w-5 h-5 text-white/80" />
-                    </div>
-                    <div className="h-8 w-8 bg-white/20 rounded-full flex items-center justify-center">
-                      <PiTiktokLogoFill className="w-5 h-5 text-white/80" />
-                    </div>
-                    <div className="h-8 w-8 bg-white/20 rounded-full flex items-center justify-center">
-                      <FaYoutube className="w-5 h-5 text-white/80" />
-                    </div>
+                    <PlatformIcons
+                      platforms={influencer.platforms || []}
+                      urls={influencer.platformsWithLinks || {}}
+                    />
                   </div>
 
                   <div className="flex flex-wrap gap-2 mt-2">
@@ -378,18 +437,40 @@ export default function InfluencerList({ jobId }) {
                     Message
                   </Button>
                 </Link>
-                <Button
-                  size="sm"
-                  className="w-full rounded-full px-4 border border-red-400 text-red-400 bg-transparent"
-                >
-                  Decline
-                </Button>
-                <Button
-                  size="sm"
-                  className="w-full bg-epiclinx-teal border border-[#0ABAB5] text-black hover:bg-epiclinx-teal/90 rounded-full px-4"
-                >
-                  Accept
-                </Button>
+                {influencer.bidStatus === "pending" ? (
+                  <>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        handleBid(influencer.bidId, jobId, "rejected")
+                      }
+                      className="w-full rounded-full px-4 border border-red-400 text-red-400 hover:bg-red-700 bg-transparent"
+                    >
+                      Decline
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        handleBid(influencer.bidId, jobId, "accepted")
+                      }
+                      className="w-full bg-epiclinx-teal border border-[#0ABAB5] text-black hover:bg-epiclinx-teal/80 rounded-full px-4"
+                    >
+                      Accept
+                    </Button>
+                  </>
+                ) : (
+                  <p
+                    className={`text-xs text-center md:text-sm font-medium rounded-full px-3 py-1 md:py-2 border transition-all duration-200 ${
+                      influencer.bidStatus === "accepted"
+                        ? "bg-epiclinx-teal text-black border-[#0ABAB5]"
+                        : "bg-transparent text-red-500 border-red-400"
+                    }`}
+                  >
+                    {influencer.bidStatus === "accepted"
+                      ? "Accepted"
+                      : "Rejected"}
+                  </p>
+                )}
               </div>
             </div>
           </div>

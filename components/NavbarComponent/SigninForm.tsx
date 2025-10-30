@@ -54,16 +54,13 @@ const SignInForm: React.FC<SignInFormProps> = ({
       const response = await apiPost<{
         user: any;
       }>("/auth/login", data);
-      console.log("✅ Login successful", response);
-
-      // 1. Save user data to global state
+      console.log("Login successful", response);
       useAuthStore.getState().setUser(response.user);
-
-      // 3. Close modal & redirect
       onClose();
       router.push("/dashboard/" + response.user.role);
+      
     } catch (error: any) {
-      console.error("❌ Login failed:", error);
+      console.error("Login failed:", error);
       toast({
         variant: "destructive",
         title: "Login failed",

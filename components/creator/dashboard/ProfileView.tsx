@@ -10,6 +10,7 @@ import {
   Pencil,
   Phone,
   Star,
+  Users,
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";

@@ -136,7 +136,7 @@ export default function BusinessInfoForm({
       businessDescription: formData?.businessDescription || "",
       companyName: formData?.companyName || "",
       shopAddress: formData?.shopAddress || "",
-      followers: formData?.followers || ""
+      followers: formData?.followers || 0
     },
   });
 
@@ -678,7 +678,7 @@ export default function BusinessInfoForm({
                 type="number"
                 min={1000}
                 placeholder="Enter follower count"
-                {...register("followers",{valueAsNumber: true})}
+                {...register("followers")}
                 onChange={handleInputChange}
                 className="border-gray-400 text-white bg-transparent rounded-full"
               />

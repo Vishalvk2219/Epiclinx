@@ -12,21 +12,15 @@ import { useSearchParams } from "next/navigation";
 import { apiFetch, apiPost } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
-type JobStatus =
-  | "pending"
-  | "submitted"
-  | "in-progress"
-  | "accepted"
-  | "completed"
-  | "declined";
+type bidStatus = "pending" | "accepted" | "rejected";
 
 export function SingleJob() {
-  const [status, setStatus] = useState<JobStatus | null>(null);
-  const [bidFetched, setBidFetched] = useState(false);
+  const [status, setStatus] = useState<bidStatus | null>(null);
+  const [bidNotSubmitted, setBidNotSubmitted] = useState(false);
   const [activeSection, setActiveSection] = useState<"offers" | "messages">(
     "offers"
   );
-  const [loading,setLoading]=useState(false)
+  const [loading, setLoading] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [bid, setBid] = useState({ offerAmount: "", proposal: "" });
   const toggleShowMore = () => setShowMore((prev) => !prev);
@@ -39,10 +33,15 @@ export function SingleJob() {
   }
   const handleApplyJob = async () => {
     try {
+      setLoading(true);
       const response = await apiPost("/bids", { ...bid, jobId: id });
       if (response?.success) {
-        setBid(response.bid);
-        console.log(response);
+        setBid({
+          offerAmount: response.bid.amount,
+          proposal: response.bid.proposal,
+        });
+        setStatus(response.bid.status);
+        setBidNotSubmitted(false)
         toast({
           variant: "success",
           title: "Bid submitted successfully",
@@ -53,43 +52,52 @@ export function SingleJob() {
         variant: "destructive",
         title: "Error submitting bid",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    setLoading(true)
-    try{
     const bidData = async () => {
-      const response = await apiFetch(`/jobs/${id}`);
-      if (response.success) {
-        if (response.bid) {
-          const bidValues = response.bid;
+      setLoading(true);
+      try {
+        const response = await apiFetch(`/jobs/${id}`);
+        if (response.success && response.bid) {
           setBid({
-            offerAmount: bidValues.amount,
-            proposal: bidValues.proposal,
+            offerAmount: response.bid.amount,
+            proposal: response.bid.proposal,
           });
-          setBidFetched(true);
+          setStatus(response.bid.status);
+          setBidNotSubmitted(false)
+        } else {
+          setBidNotSubmitted(true)
         }
-      } else {
-        console.error("Error fetching job:", response.error);
+      } catch (error: any) {
+        console.error("Error fetching job:", error);
+      } finally {
+        setLoading(false);
       }
     };
-    bidData();}catch(error:any){
-      console.log(error)
-    }finally{
-      setLoading(false)
-    }
+    if (id) bidData();
   }, [id]);
-  if(loading) return null
+
+  if (loading)
+    return (
+      <div className="flex flex-col gap-4 animate-pulse">
+        <div className="bg-gray-200 h-40 rounded-2xl"></div>
+        <div className="bg-gray-200 h-60 rounded-2xl"></div>
+      </div>
+    );
+
   return (
-    <div className="flex flex-col gap-4">
+   <div className="flex flex-col gap-4">
       {/* Job Card */}
       <div className="bg-epiclinx-semiteal !text-black rounded-3xl overflow-hidden shadow-lg">
         {/* Job Header */}
         <CampaignCard campaignId={id} />
       </div>
 
-      {!loading && !bidFetched ? (
+      {!loading && bidNotSubmitted ? (
         <div className="bg-white shadow-lg rounded-2xl p-4 w-full mx-auto flex flex-col gap-4">
           <h2 className="text-2xl font-semibold text-white text-center bg-gray-700 mx-auto p-2 rounded-sm">
             Submit Your Bid
@@ -241,7 +249,7 @@ export function SingleJob() {
       {activeSection === "offers" && (
         <div>
           {/* Replace this with actual jobs listing */}
-          <OffersList jobId={id}/>
+          <OffersList jobId={id} />
         </div>
       )}
 

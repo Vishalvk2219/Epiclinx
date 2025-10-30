@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   DollarSign,
-  Ellipsis,
   Gavel,
   Search,
   Users,
@@ -18,10 +17,7 @@ import { PiInstagramLogoFill, PiTiktokLogoFill } from "react-icons/pi";
 import { FaFacebook, FaYoutube } from "react-icons/fa";
 
 import Link from "next/link";
-import { ActionMenu } from "@/components/ActionDropdown";
 import { FaSackDollar } from "react-icons/fa6";
-import { Messages } from "../Messages";
-import CampaignList from "./CampaignList";
 import FilterSidebar from "@/components/filtersidebar";
 import { apiFetch } from "@/lib/api";
 import { PlatformIcons } from "@/components/ui/platformIcons";
@@ -47,157 +43,13 @@ interface Job {
   icon: string;
 }
 
-const CampaignList = (pagination = false) => {
-  const [activeTab, setActiveTab] = useState<string>("Pending Applications");
+const CampaignList = ({jobs}) => {
+  const pagination = true;
   const [currentPage, setCurrentPage] = useState(1);
-  const [jobs, setJobs] = useState([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<
-    "campaigns" | "submissions"
-  >("campaigns");
   const itemsPerPage = 5;
 
-  const tabs = [
-    "Pending Applications",
-    "Accepted Jobs",
-    "Jobs In Progress",
-    "Submitted Jobs",
-    "Completed Jobs",
-    "Declined Jobs",
-  ];
-
-  // const jobs: Job[] = [
-  //     {
-  //         id: "AD201",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - Spring Launch - TikTok",
-  //         brand: "H&M",
-  //         description:
-  //             "We're launching our fresh Spring Collection and looking for creators to help us bring it to life! We need short, vibrant TikTok videos showing off your favorite Spring outfits – energy, personality, and creativity are a must.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$900",
-  //         status: "Pending Applications",
-  //         applicants: 0,
-  //         bids: 30,
-  //         icon: "FaSackDollar",
-  //         nano: true,
-  //     },
-  //     {
-  //         id: "AD312",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - Campaign - Instagram Reels",
-  //         brand: "H&M",
-  //         description:
-  //             "We're on the hunt for creators who live for simplicity, comfort, and style. Showcase your favorite looks from our Everyday Essentials line – how you wear them at home, at work, or out with friends. Keep it authentic, relatable, and real.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$2000",
-  //         status: "Accepted Jobs",
-  //         applicants: 30,
-  //         bids: 0,
-  //         icon: "gavel",
-  //         nano: true,
-  //     },
-  //     {
-  //         id: "AD202",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - Fresh Fits - TikTok Activation",
-  //         brand: "H&M",
-  //         description:
-  //             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$650",
-  //         status: "Jobs In Progress",
-  //         applicants: 0,
-  //         bids: 30,
-  //         icon: "FaSackDollar",
-  //         nano: true,
-  //     },
-  //     {
-  //         id: "AD203",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - New Season Drop - Creator Collab",
-  //         brand: "H&M",
-  //         description:
-  //             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$300",
-  //         status: "Submitted Jobs",
-  //         applicants: 30,
-  //         bids: 0,
-  //         icon: "gavel",
-  //         nano: true,
-  //     },
-  //     {
-  //         id: "AD204",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - TikTok Activation",
-  //         brand: "H&M",
-  //         description:
-  //             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$1000",
-  //         status: "Completed Jobs",
-  //         applicants: 30,
-  //         bids: 0,
-  //         icon: "gavel",
-  //         nano: true,
-  //     },
-  //     {
-  //         id: "AD205",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - Summer Collection",
-  //         brand: "H&M",
-  //         description:
-  //             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$800",
-  //         status: "Declined Jobs",
-  //         applicants: 15,
-  //         bids: 0,
-  //         icon: "gavel",
-  //         nano: true,
-  //     },
-  // ]
-
-  const getJobs = async () => {
-    try {
-      const companyJobs = await apiFetch("/jobs");
-      const requiredFieldJobs = (companyJobs.jobs || []).map((jobs) => ({
-        id: jobs._id,
-        logo: jobs.companyId.profileImageUrl,
-        title: jobs.campaignName,
-        brand: jobs.companyId.companyName,
-        description: jobs.campaignBrief,
-        platforms: jobs.selectedPlatforms,
-        followerSize: followerRanges[jobs.followerSize],
-        payment: jobs.budget,
-        status: jobs.status,
-        applicants: jobs.applicants?.length || 0,
-        bids: jobs.bids?.length || 0,
-        collaborationType: jobs.collaborationType,
-        icon: jobs.icon,
-        contentType: jobs.contentType,
-        niche: jobs.niche,
-        follower: jobs.followerSize,
-        location: jobs.location || "",
-        jobType: jobs.jobType,
-      }));
-      setJobs(requiredFieldJobs);
-    } catch (error: any) {
-      console.log("Unable to load campaign or jobs");
-    }
-  };
-
-  useEffect(() => {
-    getJobs();
-  }, []);
   type FilterState = {
     categories: string[];
     followers: string[];
@@ -234,39 +86,24 @@ const CampaignList = (pagination = false) => {
       return false;
     }
 
-    // Follower size filter (simplified implementation)
-    if (filters.follower > 0) {
-      const followerCount = job.follower;
+    // Follower size filter (string-based matching)
+    const followerSizeMap: Record<string, string[]> = {
+      "1000 to 10,000": ["Nano 1,000 - 10,000 followers"],
+      "10,000 to 50,000": ["Micro 10,000 - 50,000 followers"],
+      "50,000 to 250,000": ["Mid 50,000 - 500,000 followers"],
+      "250,000+": ["Macro 500,000+ followers"],
+    };
+
+    if (filters.followers.length > 0) {
       let matchesFollowerSize = false;
 
       for (const range of filters.followers) {
-        if (
-          range === "1000 to 10,000" &&
-          followerCount >= 1000 &&
-          followerCount <= 10000
-        ) {
-          matchesFollowerSize = true;
-          break;
-        } else if (
-          range === "10,000 to 50,000" &&
-          followerCount > 10000 &&
-          followerCount <= 50000
-        ) {
-          matchesFollowerSize = true;
-          break;
-        } else if (
-          range === "50,000 to 250,000" &&
-          followerCount > 50000 &&
-          followerCount <= 250000
-        ) {
-          matchesFollowerSize = true;
-          break;
-        } else if (range === "250,000+" && followerCount > 250000) {
+        const validRanges = followerSizeMap[range] || [];
+        if (validRanges.includes(job.followerSize)) {
           matchesFollowerSize = true;
           break;
         }
       }
-
       if (!matchesFollowerSize) {
         return false;
       }
@@ -434,7 +271,7 @@ const CampaignList = (pagination = false) => {
                       Pending
                     </span>
                   ) : job.status === "Accepted Jobs" ? (
-                    <span className="bg-[#FFC5C5] border border-[#FFC5C5] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
+                    <span className="bg-[#50be4a] border border-[#45e368] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
                       Accepted
                     </span>
                   ) : (
@@ -451,55 +288,7 @@ const CampaignList = (pagination = false) => {
               </Link>
 
               {/* Row 3: Platform logos */}
-              <div className="flex space-x-2">
-                {job.platforms.map((platform, index) => {
-                  const name = platform.toLowerCase();
-
-                  // Define all supported platforms once
-                  const platformMap = {
-                    instagram: {
-                      icon: (
-                        <PiInstagramLogoFill className="w-5 h-5 text-black/80" />
-                      ),
-                      url: "https://www.instagram.com",
-                    },
-                    tiktok: {
-                      icon: (
-                        <PiTiktokLogoFill className="w-5 h-5 text-black/80" />
-                      ),
-                      url: "https://www.tiktok.com",
-                    },
-                    youtube: {
-                      icon: <FaYoutube className="w-5 h-5 text-black/80" />,
-                      url: "https://www.youtube.com",
-                    },
-                    facebook: {
-                      icon: <FaFacebook className="w-5 h-5 text-black/80" />,
-                      url: "https://www.facebook.com",
-                    },
-                  };
-
-                  const platformData = platformMap[name];
-
-                  if (!platformData) return null; // skip unsupported ones
-
-                  return (
-                    <div
-                      key={index}
-                      className="w-8 h-8 rounded-full bg-epiclinx-semiteal flex items-center justify-center"
-                    >
-                      <a
-                        href={platformData.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {platformData.icon}
-                      </a>
-                    </div>
-                  );
-                })}
-              </div>
-
+              <PlatformIcons platforms={job.platforms}/>
               {/* Row 4: Description */}
               <p className="text-white text-sm font-light">{job.description}</p>
 
@@ -578,7 +367,7 @@ const CampaignList = (pagination = false) => {
                           Pending
                         </span>
                       ) : job.status === "Accepted Jobs" ? (
-                        <span className="bg-[#FFC5C5] border border-red-400 text-black font-light text-[11px] px-2 py-1 rounded-md">
+                        <span className="bg-[#50be4a] border border-[#45e368] text-black font-light text-[11px] px-2 py-1 rounded-md">
                           Accepted
                         </span>
                       ) : job.status === "Completed Jobs" ? (

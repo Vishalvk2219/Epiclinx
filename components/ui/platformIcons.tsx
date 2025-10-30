@@ -3,7 +3,7 @@
 import React from "react";
 import { PiInstagramLogoFill, PiTiktokLogoFill } from "react-icons/pi";
 import { FaYoutube, FaFacebook, FaTwitter, FaLinkedin, FaPinterest, FaSnapchatGhost, FaReddit, FaTwitch } from "react-icons/fa";
-import { SiKick } from "react-icons/si"; // Kick icon from react-icons/si
+import { SiKick } from "react-icons/si";
 
 export type Platform =
   | "instagram"
@@ -19,10 +19,10 @@ export type Platform =
   | "kick";
 
 interface PlatformIconsProps {
-  platforms: string[]; // platform names
-  urls?: Record<string, string>; // optional custom URLs
-  size?: number; // icon size
-  className?: string; // optional wrapper class
+  platforms: string[]; 
+  urls?: Record<string, string>; 
+  size?: number; 
+  className?: string;
 }
 
 export const PlatformIcons: React.FC<PlatformIconsProps> = ({

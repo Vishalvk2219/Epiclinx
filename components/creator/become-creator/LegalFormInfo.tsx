@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,7 @@ export function LegalInfoForm({
   const [isReady, setIsReady] = useState(false);
   const [isPaymentComplete, setIsPaymentComplete] = useState(false);
   const [isFailedToCreateSession, setIsFailedToCreateSession] = useState(false);
+  const [sessionClientSecret,setSessionClientSecret]=useState(null)
   const { toast } = useToast();
   const {
     register,
@@ -70,20 +71,23 @@ export function LegalInfoForm({
         recurring_interval: formData.recurring_interval,
         trial: formData.trial,
       });
-      console.log("response=====> ", response);
       if (response.error) {
-        if (response.error == "Conflict") {
+        if (response.error === "Conflict") {
           setIsPaymentComplete(true);
+          return
         } else {
           toast({
             variant: "destructive",
             title: "Failed",
-            description: response.message || "Could not load seccure form.",
+            description: response.message || "Could not load secure form.",
           });
           setIsFailedToCreateSession(true);
         }
       }
-      return response.checkoutSessionClientSecret;
+      if (response.checkoutSessionClientSecret){
+        setSessionClientSecret(response.checkoutSessionClientSecret)
+      }
+      return
     } catch (e: any) {
       console.log("Error OUTSIDE =====> ", e);
       console.log("e.message OUTSIDE =====> ", e.message);
@@ -94,7 +98,9 @@ export function LegalInfoForm({
       setIsReady(true);
     }
   };
-
+  useEffect(()=>{
+    fetchClientSecret()
+  },[])
   return (
     <div>
       {!isReady && (
@@ -188,10 +194,10 @@ export function LegalInfoForm({
         </div>
       )}
 
-      <CheckoutProvider
+      {sessionClientSecret!==null ? <CheckoutProvider
         stripe={stripePromise}
         options={{
-          fetchClientSecret,
+          fetchClientSecret:sessionClientSecret,
           elementsOptions: {
             appearance: {
               theme: "night",
@@ -234,7 +240,7 @@ export function LegalInfoForm({
           errors={errors}
           isSubmitting={isSubmitting}
         />
-      </CheckoutProvider>
+      </CheckoutProvider>:null}
     </div>
   );
 }

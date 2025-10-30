@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Briefcase,
@@ -8,16 +8,18 @@ import {
   ChevronRight,
   DollarSign,
   Gavel,
+  Locate,
   Search,
   Users,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { capitalize, cn, followerRanges } from "@/lib/utils";
 import { PiInstagramLogoFill, PiTiktokLogoFill } from "react-icons/pi";
 import { FaFacebook, FaYoutube } from "react-icons/fa";
 import Link from "next/link";
-import { FaSackDollar } from "react-icons/fa6";
+import { FaLocationPin, FaSackDollar } from "react-icons/fa6";
 import JobFilter, { JobFilterValues } from "./JobFilter";
 import { Messages } from "../Messages";
+import { apiFetch } from "@/lib/api";
 
 interface Job {
   id: string;
@@ -45,13 +47,15 @@ interface Job {
   applied?: boolean;
 }
 
-export function JobsList({ show = true, jobs }: { show?: boolean }) {
+export function JobsList({ show = true }: { show?: boolean }) {
   const [activeTab, setActiveTab] = useState<string>("Pending Applications");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeSection, setActiveSection] = useState<"jobs" | "messages">(
     "jobs"
   );
   const [searchTerm, setSearchTerm] = useState("");
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<JobFilterValues>({
     sort: "Most Recent",
     location: "",
@@ -59,130 +63,42 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
     platforms: ["All"],
     deliverables: [],
   });
-  const itemsPerPage = 6;
+  const getJobs = async () => {
+    try {
+      setLoading(true);
+      const companyJobs = await apiFetch("/jobs");
+      console.log(companyJobs);
+      const requiredFieldJobs = (companyJobs.jobs || []).map((jobs) => ({
+        id: jobs._id,
+        logo: jobs.companyId.profileImageUrl,
+        title: jobs.campaignName,
+        brand: jobs.companyId.companyName,
+        description: jobs.campaignBrief,
+        platforms: jobs.selectedPlatforms,
+        requirements: followerRanges[jobs.followerSize],
+        payment: jobs.budget,
+        collaborationType: jobs.collaborationType,
+        status: jobs.status,
+        applicants: jobs.applicants?.length || 0,
+        bids: jobs.bids?.length || 0,
+        icon: jobs.icon,
+        niche: jobs.niche || [],
+        location: capitalize(jobs.location || ""),
+        deliverables: jobs.selectedContentTypes || [],
+        deadline: jobs.postDeadline,
+      }));
+      setJobs(requiredFieldJobs);
+    } catch (error: any) {
+      console.log("Unable to load campaign or jobs");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // const jobs: Job[] = [
-  //     {
-  //         id: "AD201",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - Spring Launch - TikTok",
-  //         brand: "H&M",
-  //         description:
-  //             "We're launching our fresh Spring Collection and looking for creators to help us bring it to life! We need short, vibrant TikTok videos showing off your favorite Spring outfits – energy, personality, and creativity are a must.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$900",
-  //         status: "Pending Applications",
-  //         applicants: 0,
-  //         bids: 30,
-  //         icon: "FaSackDollar",
-  //         nano: true,
-  //         niche: ["Fashion", "Lifestyle"],
-  //         deliverables: ["Video"],
-  //         location: "USA",
-  //         applied: false,
-  //     },
-  //     {
-  //         id: "AD312",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - Campaign - Instagram Reels",
-  //         brand: "H&M",
-  //         description:
-  //             "We're on the hunt for creators who live for simplicity, comfort, and style. Showcase your favorite looks from our Everyday Essentials line – how you wear them at home, at work, or out with friends. Keep it authentic, relatable, and real.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$2000",
-  //         status: "Pending Applications",
-  //         applicants: 30,
-  //         bids: 0,
-  //         icon: "gavel",
-  //         nano: true,
-  //         niche: ["Fashion"],
-  //         deliverables: ["Reel"],
-  //         location: "UK",
-  //         applied: true,
-  //     },
-  //     {
-  //         id: "AD202",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - Fresh Fits - TikTok Activation",
-  //         brand: "H&M",
-  //         description:
-  //             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$650",
-  //         status: "Pending Applications",
-  //         applicants: 0,
-  //         bids: 30,
-  //         icon: "FaSackDollar",
-  //         nano: true,
-  //         niche: ["Fashion", "Lifestyle"],
-  //         deliverables: ["Video"],
-  //         location: "Canada",
-  //         applied: true,
-  //     },
-  //     {
-  //         id: "AD203",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - New Season Drop - Creator Collab",
-  //         brand: "H&M",
-  //         description:
-  //             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$300",
-  //         status: "Pending Applications",
-  //         applicants: 30,
-  //         bids: 0,
-  //         icon: "gavel",
-  //         nano: true,
-  //         niche: ["Tech", "Gadgets"],
-  //         deliverables: ["Photo"],
-  //         location: "USA",
-  //         applied: true,
-  //     },
-  //     {
-  //         id: "AD204",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - TikTok Activation",
-  //         brand: "H&M",
-  //         description:
-  //             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$1000",
-  //         status: "Pending Applications",
-  //         applicants: 30,
-  //         bids: 0,
-  //         icon: "gavel",
-  //         nano: true,
-  //         niche: ["Gaming", "Esports"],
-  //         deliverables: ["Video", "Photo"],
-  //         location: "Australia",
-  //         applied: true,
-  //     },
-  //     {
-  //         id: "AD205",
-  //         logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //         title: "H&M - Summer Collection",
-  //         brand: "H&M",
-  //         description:
-  //             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //         platforms: ["Instagram", "TikTok", "Youtube"],
-  //         requirements: "Nano (1,000 - 10,000 followers)",
-  //         payment: "$800",
-  //         status: "Pending Applications",
-  //         applicants: 15,
-  //         bids: 0,
-  //         icon: "gavel",
-  //         nano: true,
-  //         niche: ["Fashion", "Lifestyle"],
-  //         deliverables: ["Reel", "Video"],
-  //         location: "UK",
-  //         applied: true,
-  //     },
-  // ]
+  useEffect(() => {
+    getJobs();
+  }, []);
+  const itemsPerPage = 6;
 
   // Filter jobs based on search term and filters
   const filteredJobs = jobs
@@ -203,7 +119,11 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
       }
 
       // Filter by location
-      if (filters.location && filters.location !== "" && job.location.toLowerCase() !== filters.location.toLowerCase()) {
+      if (
+        filters.location &&
+        filters.location !== "" &&
+        job.location.toLowerCase() !== filters.location.toLowerCase()
+      ) {
         return false;
       }
 
@@ -279,7 +199,8 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when filters change
   };
-
+if (loading) return <p>Loading ...</p>;
+if (!jobs) return <p>No jobs Available...</p>;
   return (
     <div className="overflow-hidden py-3">
       <div className="">
@@ -435,6 +356,10 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
                       UGC
                     </div>
 
+                    <div className="flex items-center gap-1 text-white text-xs font-light">
+                      <FaLocationPin className="w-4 h-4" />
+                      {job.location}
+                    </div>
                     {/* Row 7: Paid */}
                     <div className="flex items-center gap-1 text-white text-sm font-light">
                       <DollarSign className="w-4 h-4" />
@@ -569,7 +494,10 @@ export function JobsList({ show = true, jobs }: { show?: boolean }) {
                           <Briefcase className="w-5 h-5" />
                           UGC
                         </div>
-
+                        <div className="flex items-center gap-1 text-white text-xs font-light">
+                          <FaLocationPin className="w-4 h-4" />
+                          {job.location}
+                        </div>
                         <div className="flex items-center gap-1 text-white text-sm font-light">
                           <DollarSign className="w-5 h-5" />
                           {job.collaborationType}
