@@ -63,9 +63,9 @@ const step1Schema = z.object({
       message: "Campaign duration must be a valid date string",
     }),
   postDeadline: z
-  .string()
-  .min(1, "Post deadline is required")
-  .refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
+    .string()
+    .min(1, "Post deadline is required")
+    .refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
 
   location: z
     .string()
@@ -114,6 +114,7 @@ interface PublicJobFormProps {
   nextStep: () => void;
   prevStep: () => void;
   handleSubmit: (data: any) => void;
+  isSubmitting:boolean
 }
 
 export function PublicJobForm({
@@ -121,6 +122,7 @@ export function PublicJobForm({
   nextStep,
   prevStep,
   handleSubmit,
+  isSubmitting = false
 }: PublicJobFormProps) {
   // Form data state
   const [formData, setFormData] = useState<PublicFormData>({
@@ -240,13 +242,13 @@ export function PublicJobForm({
     if (tag && !hashtags.includes(tag)) {
       const newHashtags = [...hashtags, tag];
       setHashtags(newHashtags);
-     if (newHashtags.length > 0 && errors.hashtags) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.hashtags;
-        return newErrors; 
-      });
-    }
+      if (newHashtags.length > 0 && errors.hashtags) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.hashtags;
+          return newErrors;
+        });
+      }
     }
   };
 
@@ -289,7 +291,6 @@ export function PublicJobForm({
             return newErrors;
           });
         }
-        
       }
     }
   };
@@ -347,15 +348,15 @@ export function PublicJobForm({
       setErrors({});
 
       if (currentStep === 4) {
-        const data = {
-          ...formData,
-          selectedPlatforms,
-          selectedContentTypes,
-          hashtags,
-          niche: selectedNiche,
-          offerType,
-        };
-        handleSubmit(data);
+          const data = {
+            ...formData,
+            selectedPlatforms,
+            selectedContentTypes,
+            hashtags,
+            niche: selectedNiche,
+            offerType,
+          };
+          handleSubmit(data);
       } else {
         nextStep();
       }
@@ -628,7 +629,7 @@ export function PublicJobForm({
                     : undefined
                 }
                 onChange={(date) => {
-                 const isoString = date ? date.toISOString() : "";
+                  const isoString = date ? date.toISOString() : "";
                   setFormData((prev) => ({ ...prev, postDeadline: isoString }));
 
                   // Clear existing error if any
@@ -1012,6 +1013,7 @@ export function PublicJobForm({
         onBack={prevStep}
         onNext={onNextStep}
         nextLabel={currentStep === 4 ? "Submit" : "Continue"}
+        disabled={isUploading || isSubmitting}
       />
     </div>
   );

@@ -118,7 +118,7 @@ export function BidssList() {
   const fetchBids = async () => {
     try {
       setLoading(true);
-      const response = await apiFetch("/bids/fetch-all-jobs");
+      const response = await apiFetch("/bids/fetch-all-bids");
       if (response.success) {
         const formattedBids = response.allApplications.map((bid: any) => ({
           bidId: bid._id,

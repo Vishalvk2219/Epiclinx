@@ -42,7 +42,7 @@ export interface IJob extends Document {
 const JobSchema = new Schema<IJob>(
   {
     campaignImageUrl:{type:String},
-    campaignName: { type: String, required: true },
+    campaignName: { type: String, required: true, unique:true },
     campaignBrief: { type: String, required: true },
     campaignGoal: { type: String, required: true },
     requirements: { type: String, required: true },

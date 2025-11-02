@@ -71,108 +71,9 @@ export function JobsList({
         "Declined Jobs",
       ];
 
-  // const jobs: Job[] = [
-  //   {
-  //     id: "AD201",
-  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //     title: "H&M - Spring Launch - TikTok",
-  //     brand: "H&M",
-  //     description:
-  //       "We're launching our fresh Spring Collection and looking for creators to help us bring it to life! We need short, vibrant TikTok videos showing off your favorite Spring outfits – energy, personality, and creativity are a must.",
-  //     platforms: ["Instagram", "TikTok", "Youtube"],
-  //     requirements: "Nano (1,000 - 10,000 followers)",
-  //     payment: "$900",
-  //     status: "Pending Applications",
-  //     applicants: 0,
-  //     bids: 30,
-  //     icon: "FaSackDollar",
-  //     nano: true,
-  //   },
-  //   {
-  //     id: "AD312",
-  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //     title: "H&M - Campaign - Instagram Reels",
-  //     brand: "H&M",
-  //     description:
-  //       "We're on the hunt for creators who live for simplicity, comfort, and style. Showcase your favorite looks from our Everyday Essentials line – how you wear them at home, at work, or out with friends. Keep it authentic, relatable, and real.",
-  //     platforms: ["Instagram", "TikTok", "Youtube"],
-  //     requirements: "Nano (1,000 - 10,000 followers)",
-  //     payment: "$2000",
-  //     status: "Accepted Jobs",
-  //     applicants: 30,
-  //     bids: 0,
-  //     icon: "gavel",
-  //     nano: true,
-  //   },
-  //   {
-  //     id: "AD202",
-  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //     title: "H&M - Fresh Fits - TikTok Activation",
-  //     brand: "H&M",
-  //     description:
-  //       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //     platforms: ["Instagram", "TikTok", "Youtube"],
-  //     requirements: "Nano (1,000 - 10,000 followers)",
-  //     payment: "$650",
-  //     status: "Jobs In Progress",
-  //     applicants: 0,
-  //     bids: 30,
-  //     icon: "FaSackDollar",
-  //     nano: true,
-  //   },
-  //   {
-  //     id: "AD203",
-  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //     title: "H&M - New Season Drop - Creator Collab",
-  //     brand: "H&M",
-  //     description:
-  //       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //     platforms: ["Instagram", "TikTok", "Youtube"],
-  //     requirements: "Nano (1,000 - 10,000 followers)",
-  //     payment: "$300",
-  //     status: "Submitted Jobs",
-  //     applicants: 30,
-  //     bids: 0,
-  //     icon: "gavel",
-  //     nano: true,
-  //   },
-  //   {
-  //     id: "AD204",
-  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //     title: "H&M - TikTok Activation",
-  //     brand: "H&M",
-  //     description:
-  //       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //     platforms: ["Instagram", "TikTok", "Youtube"],
-  //     requirements: "Nano (1,000 - 10,000 followers)",
-  //     payment: "$1000",
-  //     status: "Completed Jobs",
-  //     applicants: 30,
-  //     bids: 0,
-  //     icon: "gavel",
-  //     nano: true,
-  //   },
-  //   {
-  //     id: "AD205",
-  //     logo: "https://1000logos.net/wp-content/uploads/2017/02/Hennes-logo.jpg",
-  //     title: "H&M - Summer Collection",
-  //     brand: "H&M",
-  //     description:
-  //       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  //     platforms: ["Instagram", "TikTok", "Youtube"],
-  //     requirements: "Nano (1,000 - 10,000 followers)",
-  //     payment: "$800",
-  //     status: "Declined Jobs",
-  //     applicants: 15,
-  //     bids: 0,
-  //     icon: "gavel",
-  //     nano: true,
-  //   },
-  // ]
-
   const allJobs = async () => {
     try {
-      const fetchAllJobs = await apiFetch("/bids/fetch-all-jobs");
+      const fetchAllJobs = await apiFetch("/bids/fetch-all-bids");
       const requiredFieldJobs = (fetchAllJobs.allApplications || []).map(
         (bids) => ({
           id: bids.jobId._id,
@@ -223,28 +124,8 @@ export function JobsList({
 
   return (
     <div className="rounded-3xl overflow-hidden">
-      <div className="">
+      <div>
         <div className="flex items-center max-md:flex-col max-md:items-start max-md:gap-4 justify-between mb-6">
-          {show ? (
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
-                <Image
-                  src={
-                    "https://easy-peasy.ai/cdn-cgi/image/quality=80,format=auto,width=700/https://media.easy-peasy.ai/fb9a7875-06f1-48d6-b719-ba908fd7217f/f8225861-19d3-4b7e-8bdc-d4cee17872ca.png"
-                  }
-                  alt="User"
-                  width={50}
-                  height={50}
-                  className="rounded-full object-cover"
-                />
-              </div>
-              <h2 className="text-xl font-bold text-white">Hello Allison!</h2>
-            </div>
-          ) : (
-            <div></div>
-          )}
-
-          {/* Tabs for All Jobs Posted and Messages */}
           {!publicProfile && (
             <div className="flex rounded-full bg-[#3A3A3A] p-1">
               <button
@@ -586,8 +467,7 @@ export function JobsList({
               ))}
             </div>
 
-            {/* Pagination - Updated to match the image */}
-            <div className="flex justify-center items-center mt-6 gap-2">
+            {totalPages>1 ? (<div className="flex justify-center items-center mt-6 gap-2">
               <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -598,7 +478,7 @@ export function JobsList({
               </button>
 
               {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-                // Show first 3 pages
+                
                 const pageNum = i + 1;
 
                 return (
@@ -621,7 +501,7 @@ export function JobsList({
                 <>
                   <span className="text-white">...</span>
 
-                  {/* Show second last page */}
+                
                   {totalPages > 4 && (
                     <button
                       onClick={() => goToPage(totalPages - 1)}
@@ -631,7 +511,7 @@ export function JobsList({
                     </button>
                   )}
 
-                  {/* Show last page */}
+               
                   <button
                     onClick={() => goToPage(totalPages)}
                     className="w-8 h-8 flex items-center justify-center rounded-sm bg-epiclinx-teal text-white"
@@ -649,7 +529,7 @@ export function JobsList({
                 Next
                 <ChevronRight size={16} className="ml-1" />
               </button>
-            </div>
+            </div>) : null}
           </>
         ) : (
           <Messages />

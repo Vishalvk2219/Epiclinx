@@ -76,7 +76,8 @@ interface DirectOfferFormProps {
   currentStep: number;
   nextStep: () => void;
   prevStep: () => void;
-  handleSubmit: (data: any) => void;
+  handleSubmit: (data: any) => voi;
+  isSubmitting:boolean
 }
 
 export function DirectOfferForm({
@@ -84,6 +85,7 @@ export function DirectOfferForm({
   nextStep,
   prevStep,
   handleSubmit,
+  isSubmitting = false
 }: DirectOfferFormProps) {
   const [hashtags, setHashtags] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -250,12 +252,12 @@ export function DirectOfferForm({
         });
       }
       if (currentStep === 4) {
-        handleSubmit({
-          ...formData,
-          selectedPlatforms,
-          selectedNiche,
-          hashtags,
-        });
+          handleSubmit({
+            ...formData,
+            selectedPlatforms,
+            selectedNiche,
+            hashtags,
+          });
       } else {
         nextStep();
       }
@@ -757,6 +759,7 @@ export function DirectOfferForm({
         onBack={prevStep}
         onNext={onNextStep}
         nextLabel={currentStep === 4 ? "Submit" : "Continue"}
+        disabled={isUploading || isSubmitting}
       />
     </div>
   );

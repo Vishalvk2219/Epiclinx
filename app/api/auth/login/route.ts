@@ -8,9 +8,9 @@ export async function POST(req: Request) {
     connectDB();
     const body = await req.json();
     const { username, password } = body;
-    const user = await User.findOne({email:username});
+    const user = await User.findOne({email:username}).select("+password");
 
-    const validAuth = user.comparePassword(password);
+    const validAuth = await user.comparePassword(password);
     if (!validAuth) {
       return NextResponse.json(
         { success: false, error: "Invalid Credentials" },

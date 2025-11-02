@@ -238,7 +238,7 @@ export default function InfluencerList({ jobId }) {
   async function handleBid(
     bidId: string,
     jobId: string,
-    status: "accepted" | "rejected"
+    status: "Accepted" | "Rejected"
   ) {
     try {
       if (!bidId || !jobId || !status) {
@@ -442,7 +442,7 @@ export default function InfluencerList({ jobId }) {
                     <Button
                       size="sm"
                       onClick={() =>
-                        handleBid(influencer.bidId, jobId, "rejected")
+                        handleBid(influencer.bidId, jobId, "Rejected")
                       }
                       className="w-full rounded-full px-4 border border-red-400 text-red-400 hover:bg-red-700 bg-transparent"
                     >
@@ -451,7 +451,7 @@ export default function InfluencerList({ jobId }) {
                     <Button
                       size="sm"
                       onClick={() =>
-                        handleBid(influencer.bidId, jobId, "accepted")
+                        handleBid(influencer.bidId, jobId, "Accepted")
                       }
                       className="w-full bg-epiclinx-teal border border-[#0ABAB5] text-black hover:bg-epiclinx-teal/80 rounded-full px-4"
                     >
@@ -461,12 +461,12 @@ export default function InfluencerList({ jobId }) {
                 ) : (
                   <p
                     className={`text-xs text-center md:text-sm font-medium rounded-full px-3 py-1 md:py-2 border transition-all duration-200 ${
-                      influencer.bidStatus === "accepted"
+                      influencer.bidStatus === "Accepted"
                         ? "bg-epiclinx-teal text-black border-[#0ABAB5]"
                         : "bg-transparent text-red-500 border-red-400"
                     }`}
                   >
-                    {influencer.bidStatus === "accepted"
+                    {influencer.bidStatus === "Accepted"
                       ? "Accepted"
                       : "Rejected"}
                   </p>

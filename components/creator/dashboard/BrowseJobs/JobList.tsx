@@ -20,6 +20,7 @@ import { FaLocationPin, FaSackDollar } from "react-icons/fa6";
 import JobFilter, { JobFilterValues } from "./JobFilter";
 import { Messages } from "../Messages";
 import { apiFetch } from "@/lib/api";
+import { PlatformIcons } from "@/components/ui/platformIcons";
 
 interface Job {
   id: string;
@@ -47,7 +48,7 @@ interface Job {
   applied?: boolean;
 }
 
-export function JobsList({ show = true }: { show?: boolean }) {
+export function JobsList({ jobStatuses }) {
   const [activeTab, setActiveTab] = useState<string>("Pending Applications");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeSection, setActiveSection] = useState<"jobs" | "messages">(
@@ -56,6 +57,7 @@ export function JobsList({ show = true }: { show?: boolean }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
+
   const [filters, setFilters] = useState<JobFilterValues>({
     sort: "Most Recent",
     location: "",
@@ -82,6 +84,7 @@ export function JobsList({ show = true }: { show?: boolean }) {
         applicants: jobs.applicants?.length || 0,
         bids: jobs.bids?.length || 0,
         icon: jobs.icon,
+        contentType: jobs.contentType,
         niche: jobs.niche || [],
         location: capitalize(jobs.location || ""),
         deliverables: jobs.selectedContentTypes || [],
@@ -98,7 +101,7 @@ export function JobsList({ show = true }: { show?: boolean }) {
   useEffect(() => {
     getJobs();
   }, []);
-  const itemsPerPage = 6;
+  const itemsPerPage = 5;
 
   // Filter jobs based on search term and filters
   const filteredJobs = jobs
@@ -184,7 +187,7 @@ export function JobsList({ show = true }: { show?: boolean }) {
     });
 
   const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
-  const currentJobs = jobs.slice(
+  const currentJobs = filteredJobs.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -199,8 +202,8 @@ export function JobsList({ show = true }: { show?: boolean }) {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when filters change
   };
-if (loading) return <p>Loading ...</p>;
-if (!jobs) return <p>No jobs Available...</p>;
+  if (loading) return <p>Loading ...</p>;
+  if (!jobs) return <p>No jobs Available...</p>;
   return (
     <div className="overflow-hidden py-3">
       <div className="">
@@ -226,7 +229,7 @@ if (!jobs) return <p>No jobs Available...</p>;
             </div>
 
             <div className="space-y-4">
-              {filteredJobs.map((job) => (
+              {currentJobs.map((job) => (
                 <div
                   key={job.id}
                   className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 relative"
@@ -263,19 +266,21 @@ if (!jobs) return <p>No jobs Available...</p>;
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {job.status === "Pending Applications" ? (
-                          <span className="bg-gray-400/20 border border-white text-white text-xs px-2 py-1 rounded-md md:rounded-full">
-                            Pending
-                          </span>
-                        ) : job.status === "Accepted Jobs" ? (
-                          <span className="bg-[#FFC5C5] border border-[#FFC5C5] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
-                            Accepted
-                          </span>
-                        ) : (
-                          <span className="bg-[#8BC34A] border border-[#8BC34A] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
-                            Completed
-                          </span>
-                        )}
+                        {(() => {
+                          const jobStatus = jobStatuses.find(
+                            (j) => j.id === job.id
+                          )?.status;
+
+                          if (jobStatus === "Pending") {
+                            return (
+                              <span className="bg-gray-400/20 border border-white text-white text-xs px-2 py-1 rounded-md md:rounded-full">
+                                Applied
+                              </span>
+                            );
+                          }
+
+                          return null;
+                        })()}
                       </div>
                     </div>
 
@@ -287,58 +292,7 @@ if (!jobs) return <p>No jobs Available...</p>;
                     </Link>
 
                     {/* Row 3: Platform logos */}
-                    <div className="flex space-x-2">
-                      {job.platforms.map((platform, index) => {
-                        const name = platform.toLowerCase();
-
-                        // Define all supported platforms once
-                        const platformMap = {
-                          instagram: {
-                            icon: (
-                              <PiInstagramLogoFill className="w-5 h-5 text-black/80" />
-                            ),
-                            url: "https://www.instagram.com",
-                          },
-                          tiktok: {
-                            icon: (
-                              <PiTiktokLogoFill className="w-5 h-5 text-black/80" />
-                            ),
-                            url: "https://www.tiktok.com",
-                          },
-                          youtube: {
-                            icon: (
-                              <FaYoutube className="w-5 h-5 text-black/80" />
-                            ),
-                            url: "https://www.youtube.com",
-                          },
-                          facebook: {
-                            icon: (
-                              <FaFacebook className="w-5 h-5 text-black/80" />
-                            ),
-                            url: "https://www.facebook.com",
-                          },
-                        };
-
-                        const platformData = platformMap[name];
-
-                        if (!platformData) return null; // skip unsupported ones
-
-                        return (
-                          <div
-                            key={index}
-                            className="w-8 h-8 rounded-full bg-epiclinx-semiteal flex items-center justify-center"
-                          >
-                            <a
-                              href={platformData.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {platformData.icon}
-                            </a>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <PlatformIcons platforms={job.platforms} />
                     {/* Row 4: Description */}
                     <p className="text-white text-sm font-light">
                       {job.description}
@@ -353,7 +307,7 @@ if (!jobs) return <p>No jobs Available...</p>;
                     {/* Row 6: UGC */}
                     <div className="flex items-center gap-1 text-white text-xs font-light">
                       <Briefcase className="w-4 h-4" />
-                      UGC
+                      {job.contentType}
                     </div>
 
                     <div className="flex items-center gap-1 text-white text-xs font-light">
@@ -368,20 +322,29 @@ if (!jobs) return <p>No jobs Available...</p>;
 
                     {/* Row 8: Bids/Applicants */}
                     <div className="text-white text-sm flex items-center gap-2">
-                      {job.applied && <div>Your Bid: {job.payment}</div>}
                       <div className="ml-auto text-white text-xs font-light">
-                        {job.applied ? (
-                          <button className="border border-red-500 bg-transparent rounded-full px-4 py-1 text-sm font-light text-red-500">
-                            Cancel Application
-                          </button>
-                        ) : (
-                          <Link
-                            href={`/dashboard/creator/apply-for-job?id=${job.id}`}
-                            className="bg-epiclinx-teal rounded-full px-4 py-2 text-sm text-black text-xs hover:bg-epiclinx-teal/90"
-                          >
-                            Apply for Job
-                          </Link>
-                        )}
+                        {(() => {
+                          const jobStatus = jobStatuses.find(
+                            (j) => j.id === job.id
+                          )?.status;
+
+                          if (jobStatus === "Pending") {
+                            return (
+                              <button className="border border-red-500 bg-transparent rounded-full px-4 py-1 text-sm font-light text-red-500">
+                                Cancel Application
+                              </button>
+                            );
+                          } else {
+                            return (
+                              <Link
+                                href={`/dashboard/creator/apply-for-job?id=${job.id}`}
+                                className="bg-epiclinx-teal rounded-full px-4 py-2 text-sm text-black text-xs hover:bg-epiclinx-teal/90"
+                              >
+                                Apply for Job
+                              </Link>
+                            );
+                          }
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -425,61 +388,26 @@ if (!jobs) return <p>No jobs Available...</p>;
                               {job.title}
                             </h3>
                           </Link>
-                          <div className="flex space-x-2">
-                            {job.platforms.map((platform, index) => {
-                              const name = platform.toLowerCase();
-
-                              // Define all supported platforms once
-                              const platformMap = {
-                                instagram: {
-                                  icon: (
-                                    <PiInstagramLogoFill className="w-5 h-5 text-black/80" />
-                                  ),
-                                  url: "https://www.instagram.com",
-                                },
-                                tiktok: {
-                                  icon: (
-                                    <PiTiktokLogoFill className="w-5 h-5 text-black/80" />
-                                  ),
-                                  url: "https://www.tiktok.com",
-                                },
-                                youtube: {
-                                  icon: (
-                                    <FaYoutube className="w-5 h-5 text-black/80" />
-                                  ),
-                                  url: "https://www.youtube.com",
-                                },
-                                facebook: {
-                                  icon: (
-                                    <FaFacebook className="w-5 h-5 text-black/80" />
-                                  ),
-                                  url: "https://www.facebook.com",
-                                },
-                              };
-
-                              const platformData = platformMap[name];
-
-                              if (!platformData) return null; // skip unsupported ones
-
-                              return (
-                                <div
-                                  key={index}
-                                  className="w-8 h-8 rounded-full bg-epiclinx-semiteal flex items-center justify-center"
-                                >
-                                  <a
-                                    href={platformData.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    {platformData.icon}
-                                  </a>
-                                </div>
-                              );
-                            })}
-                          </div>
+                          <PlatformIcons platforms={job.platforms} />
                         </div>
                       </div>
-
+                      
+                      <div className="flex items-center gap-4">
+                        {(() => {
+                          const jobStatus = jobStatuses.find(
+                            (j) => j.id === job.id
+                          )?.status;
+                          if (jobStatus === "Pending") {
+                            return (
+                              <span className="absolute top-4 right-4 bg-blue-400/20 border border-white text-white text-xs px-3 py-1 rounded-full">
+                                Applied
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                     
                       <p className="text-white text-sm mb-4 font-light">
                         {job.description}
                       </p>
@@ -492,7 +420,7 @@ if (!jobs) return <p>No jobs Available...</p>;
 
                         <div className="flex items-center gap-1 text-white text-xs font-light">
                           <Briefcase className="w-5 h-5" />
-                          UGC
+                          {job.contentType}
                         </div>
                         <div className="flex items-center gap-1 text-white text-xs font-light">
                           <FaLocationPin className="w-4 h-4" />
@@ -504,29 +432,29 @@ if (!jobs) return <p>No jobs Available...</p>;
                         </div>
 
                         <div className="ml-auto text-white text-xs font-light flex items-center gap-2">
-                          {job.applied && <div>Your Bid: {job.payment}</div>}
                           <div className="ml-auto text-white text-xs font-light">
-                            {job.applied ? (
-                              job.status === "Pending Applications" ? (
-                                <button className="border border-red-500 bg-transparent rounded-full px-4 py-1 text-sm font-light text-red-500">
-                                  Cancel Application
-                                </button>
-                              ) : job.status === "Accepted Jobs" ? (
-                                <Link
-                                  href={`/creator/jobs/${job.id}/offer-portal`}
-                                  className="bg-epiclinx-teal rounded-full px-4 py-2 text-sm text-black text-xs hover:bg-epiclinx-teal/90"
-                                >
-                                  Enter Offer Portal
-                                </Link>
-                              ) : null
-                            ) : (
-                              <Link
-                                href={`/dashboard/creator/apply-for-job?id=${job.id}`}
-                                className="bg-epiclinx-teal rounded-full px-4 py-2 text-sm text-black text-xs hover:bg-epiclinx-teal/90"
-                              >
-                                Apply for Job
-                              </Link>
-                            )}
+                            {(() => {
+                              const jobStatus = jobStatuses.find(
+                                (j) => j.id === job.id
+                              )?.status;
+
+                              if (jobStatus === "Pending") {
+                                return (
+                                  <button className="border border-red-500 bg-transparent rounded-full px-4 py-1 text-sm font-light text-red-500">
+                                    Cancel Application
+                                  </button>
+                                );
+                              } else {
+                                return (
+                                  <Link
+                                    href={`/dashboard/creator/apply-for-job?id=${job.id}`}
+                                    className="bg-epiclinx-teal rounded-full px-4 py-2 text-sm text-black text-xs hover:bg-epiclinx-teal/90"
+                                  >
+                                    Apply for Job
+                                  </Link>
+                                );
+                              }
+                            })()}
                           </div>
                         </div>
                       </div>

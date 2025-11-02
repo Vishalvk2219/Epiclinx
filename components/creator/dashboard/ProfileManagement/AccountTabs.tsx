@@ -1,46 +1,105 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { apiPut } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
 
-const accountSchema = z.object({
-  newPassword: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string().min(8, "Password must be at least 8 characters")
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-})
+const accountSchema = z
+  .object({
+    oldPassword:z.string(),
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 export default function AccountTab() {
+  const [loading, setLoading] = useState(false);
   const form = useForm<z.infer<typeof accountSchema>>({
     resolver: zodResolver(accountSchema),
     defaultValues: {
+      oldPassword:"",
       newPassword: "",
       confirmPassword: ""
-    }
-  })
+      
+    },
+  });
 
-  function onSubmit(data: z.infer<typeof accountSchema>) {
-    console.log(data)
-    // Handle form submission
+  async function onSubmit(data: z.infer<typeof accountSchema>) {
+    try {
+      setLoading(true);
+      const res = await apiPut("/user", { oldPassword: data.oldPassword,newPassword: data.newPassword });
+      if (res.success) {
+        toast({
+          variant: "success",
+          title: "Password Changed SuccessFully",
+        });
+      }
+      form.reset()
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Failed To change Password",
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="max-w-4xl mx-auto">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-4 w-1/2">
+          <FormField
+            control={form.control}
+            name="oldPassword"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <Label htmlFor="old-password" className="font-light text-xs">
+                  Old Password
+                </Label>
+                <FormControl>
+                  <Input
+                    {...field}
+                    id="old-password"
+                    type="password"
+                    placeholder="Old password"
+                    className="bg-transparent border-gray-400 focus:border-[#0ABAB5]"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="newPassword"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <Label htmlFor="new-password" className="font-light text-xs">New Password</Label>
+                  <Label htmlFor="new-password" className="font-light text-xs">
+                    New Password
+                  </Label>
                   <FormControl>
                     <Input
                       {...field}
@@ -60,7 +119,12 @@ export default function AccountTab() {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <Label htmlFor="confirm-password" className="font-light text-xs">Confirm New Password</Label>
+                  <Label
+                    htmlFor="confirm-password"
+                    className="font-light text-xs"
+                  >
+                    Confirm New Password
+                  </Label>
                   <FormControl>
                     <Input
                       {...field}
@@ -79,13 +143,14 @@ export default function AccountTab() {
           <div className="flex justify-center mt-8">
             <button
               type="submit"
-              className="next-button px-8"
+              disabled={loading}
+              className="next-button px-8 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save Changes
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
       </Form>
     </div>
-  )
+  );
 }

@@ -100,7 +100,7 @@ userSchema.methods.comparePassword = async function (
   candidatePassword: string
 ) {
   if (!this.password) return false;
-  return bcrypt.compare(candidatePassword, this.password);
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 const User = mongoose.models.User || mongoose.model<IUser>("User", userSchema);

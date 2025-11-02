@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import connectDB from "@/lib/connect-db";
+import { verifyToken } from "@/lib/verify-token";
 
 export async function GET(req: Request) {
   try {
@@ -30,10 +31,7 @@ export async function GET(req: Request) {
         { status: 404 }
       );
     }
-    return NextResponse.json(
-      { success: true, user},
-      { status: 200 }
-    );
+    return NextResponse.json({ success: true, user }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
       { status: true, error: error.message || "Internal server error" },
@@ -49,9 +47,49 @@ export async function POST(req: Request) {
     Object.assign(user, body);
     user.save();
 
+    return NextResponse.json({ success: true, user }, { status: 201 });
+  } catch (error: any) {
     return NextResponse.json(
-      { success: true, user },
-      { status: 201 }
+      { success: false, error: error.message || "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const {oldPassword, newPassword } = body;
+
+    const decoded = await verifyToken();
+    if (!decoded) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    const user = await User.findOne({ email: decoded.email }).select("+password");
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    const isMatch = await user.comparePassword(oldPassword);
+    if (!isMatch) {
+      return NextResponse.json(
+        { success: false, error: "Wrong password" },
+        { status: 401 }
+      );
+    }
+    
+    user.password = newPassword;
+    await user.save();
+
+    return NextResponse.json(
+      { success: true, message: "Password changed successfully" },
+      { status: 200 }
     );
   } catch (error: any) {
     return NextResponse.json(

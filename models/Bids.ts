@@ -5,7 +5,7 @@ export interface IBid extends Document {
   creatorId: Types.ObjectId;
   amount: number;
   proposal: string;
-  status: "pending" | "accepted" | "rejected";
+  status: "Pending" | "Accepted" | "Rejected";
   createdAt: Date;
 }
 
@@ -17,8 +17,8 @@ const BidSchema = new Schema<IBid>(
     proposal: { type: String, required: false },
     status: {
       type: String,
-      enum: ["pending", "accepted", "rejected"],
-      default: "pending",
+      enum: ["Pending", "Accepted", "Rejected"],
+      default: "Pending",
     },
   },
   { timestamps: true }

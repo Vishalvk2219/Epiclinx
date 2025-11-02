@@ -166,20 +166,23 @@ interface NavigationButtonsProps {
   onBack?: () => void
   onNext: () => void
   nextLabel?: string
+  disabled?: boolean
 }
 
 export function NavigationButtons({
   showBack = false,
   onBack,
   onNext,
-  nextLabel = "Continue"
+  nextLabel = "Continue",
+  disabled = false,
 }: NavigationButtonsProps) {
   return (
     <div className="flex justify-center gap-4 mt-8">
       {showBack ? (
         <button
           onClick={onBack}
-          className="back-button"
+          className="back-button disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={disabled}
         >
           Back
         </button>
@@ -189,7 +192,8 @@ export function NavigationButtons({
 
       <button
         onClick={onNext}
-        className="next-button"
+        className="next-button disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={disabled}
       >
         {nextLabel}
       </button>

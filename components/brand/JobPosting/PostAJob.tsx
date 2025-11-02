@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 export default function JobPostingForm() {
   const [activeTab, setActiveTab] = useState<"public" | "direct">("public");
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting,setIsSubmitting] = useState(false)
   const totalSteps = 4;
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>(
@@ -62,6 +63,7 @@ export default function JobPostingForm() {
   };
 
   const handleSubmit = async (data: any) => {
+    setIsSubmitting(true)
   try {
     const response = await apiPost("/brand/post-job", {
       data,
@@ -89,6 +91,9 @@ export default function JobPostingForm() {
       title: "Job Posting Failed",
       description: error.message || "Please try again",
     });
+  }finally{
+    await new Promise((resolve)=> setTimeout(resolve,3000))
+    setIsSubmitting(false)
   }
 };
 
@@ -168,6 +173,7 @@ export default function JobPostingForm() {
             nextStep={nextStep}
             prevStep={prevStep}
             handleSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
           />
         )}
 
@@ -178,6 +184,7 @@ export default function JobPostingForm() {
             nextStep={nextStep}
             prevStep={prevStep}
             handleSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
           />
         )}
       </div>
