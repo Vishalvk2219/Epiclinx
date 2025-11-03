@@ -20,14 +20,14 @@ export function QuickWins() {
             id: "profile",
             title: "Complete your profile",
             icon: <User className="h-6 w-6" />,
-            href: "/dashboard/brand/profile",
+            href: "/dashboard/brand/profile-management",
             completed: true,
         },
         {
             id: "job",
             title: "Launch your first job",
             icon: <Briefcase className="h-6 w-6" />,
-            href: "/brand/post-a-job",
+            href: "/dashboard/brand/post-a-job",
             completed: false,
         },
         {

@@ -24,6 +24,7 @@ import { DatePicker } from "@/components/DatePicker";
 import { toast } from "@/hooks/use-toast";
 import { apiUpload } from "@/lib/api";
 import { contentTypeCategories } from "@/lib/utils";
+import CreatorDropdown from "@/components/creatorDropdown";
 
 // --- Zod Strict Schemas: All fields required/non-empty ---
 const step1Schema = z.object({
@@ -46,6 +47,7 @@ const step1Schema = z.object({
     errorMap: () => ({ message: "You must agree to the terms and conditions" }),
   }),
   platforms: z.array(z.string()).min(1, "Please select at least one platform"),
+  creator: z.string().min(1, "Please select Creator"),
   niche: z.array(z.string()).min(1, "Please select at least one niche"),
 });
 
@@ -77,7 +79,7 @@ interface DirectOfferFormProps {
   nextStep: () => void;
   prevStep: () => void;
   handleSubmit: (data: any) => voi;
-  isSubmitting:boolean
+  isSubmitting: boolean;
 }
 
 export function DirectOfferForm({
@@ -85,7 +87,7 @@ export function DirectOfferForm({
   nextStep,
   prevStep,
   handleSubmit,
-  isSubmitting = false
+  isSubmitting = false,
 }: DirectOfferFormProps) {
   const [hashtags, setHashtags] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -105,7 +107,7 @@ export function DirectOfferForm({
     tagUs: "",
     keepItAuthentic: "",
     dontDo: "",
-    totalPayment: null,
+    totalPayment: "",
     agreeToTerms: false,
     contentApproval: true,
     allowShowcase: true,
@@ -115,6 +117,7 @@ export function DirectOfferForm({
   const [selectedNiche, setSelectedNiche] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedCreator, setSelectedCreator] = useState("");
 
   const handleSelectChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -229,6 +232,7 @@ export function DirectOfferForm({
           ...formData,
           platforms: selectedPlatforms,
           niche: selectedNiche,
+          creator:selectedCreator
         });
       } else if (currentStep === 2) {
         step2Schema.parse({
@@ -252,12 +256,13 @@ export function DirectOfferForm({
         });
       }
       if (currentStep === 4) {
-          handleSubmit({
-            ...formData,
-            selectedPlatforms,
-            selectedNiche,
-            hashtags,
-          });
+        handleSubmit({
+          ...formData,
+          selectedPlatforms,
+          selectedNiche,
+          hashtags,
+          creatorId:selectedCreator,
+        });
       } else {
         nextStep();
       }
@@ -366,6 +371,19 @@ export function DirectOfferForm({
               </p>
             )}
           </div>
+          <div>
+          <label className="block text-xs text-white">Select Creator</label>
+          <div className="flex flex-wrap gap-2 py-1">
+            <CreatorDropdown
+              value={selectedCreator}
+              onChange={(id) => setSelectedCreator(id)}
+            />
+          </div>
+          {errors.creator && (
+            <p className="text-xs text-red-500 mt-1">{errors.creator}</p>
+          )}
+          </div>
+          
           <label className="block text-xs text-white">Select Niche</label>
           <div className="flex flex-wrap gap-2">
             {contentTypeCategories.map((category) => (

@@ -37,6 +37,7 @@ export interface IJob extends Document {
   icon:string;
   niche:string[];
   contentType:string;
+  creatorId:Types.ObjectId
 }
 
 const JobSchema = new Schema<IJob>(
@@ -75,7 +76,8 @@ const JobSchema = new Schema<IJob>(
     applicants:[{type:Schema.Types.ObjectId,ref:"User",default:[]}],
     bids:[{type:Schema.Types.ObjectId,ref:"Bids",default:[]}],
     icon:{type:String,default:'gavel'},
-    contentType:{type:String, default:"UGC"}
+    contentType:{type:String, default:"UGC"},
+    creatorId:{type:Schema.Types.ObjectId,ref:"User"}
   },
   { timestamps: true }
 );

@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   DollarSign,
+  FileSearch,
   Gavel,
   Locate,
   Search,
@@ -56,7 +57,7 @@ export function JobsList({ jobStatuses }) {
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState<JobFilterValues>({
     sort: "Most Recent",
@@ -66,8 +67,9 @@ export function JobsList({ jobStatuses }) {
     deliverables: [],
   });
   const getJobs = async () => {
+    setLoading(true)
     try {
-      setLoading(true);
+
       const companyJobs = await apiFetch("/jobs");
       console.log(companyJobs);
       const requiredFieldJobs = (companyJobs.jobs || []).map((jobs) => ({
@@ -202,8 +204,23 @@ export function JobsList({ jobStatuses }) {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when filters change
   };
-  if (loading) return <p>Loading ...</p>;
-  if (!jobs) return <p>No jobs Available...</p>;
+  
+const LoadingState = ({ message = "Loading..." }: { message?: string }) => (
+  <div className="flex flex-col items-center justify-center py-10 text-gray-300">
+    <div className="relative">
+      <div className="h-10 w-10 border-4 border-gray-600 border-t-epiclinx-teal rounded-full animate-spin" />
+    </div>
+    <p className="mt-3 text-sm text-gray-400">{message}</p>
+  </div>
+);
+
+const EmptyState = ({ message = "No data found" }: { message?: string }) => (
+  <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+    <FileSearch className="h-12 w-12 mb-3 text-gray-500" />
+    <p className="text-lg">{message}</p>
+  </div>
+);
+
   return (
     <div className="overflow-hidden py-3">
       <div className="">
@@ -229,7 +246,7 @@ export function JobsList({ jobStatuses }) {
             </div>
 
             <div className="space-y-4">
-              {currentJobs.map((job) => (
+              {loading ? <LoadingState message="Loading Jobs..."/> :(currentJobs.length === 0 ? <EmptyState message="No Jobs Found"/> : <>{currentJobs.map((job) => (
                 <div
                   key={job.id}
                   className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 relative"
@@ -461,7 +478,7 @@ export function JobsList({ jobStatuses }) {
                     </div>
                   </div>
                 </div>
-              ))}
+              ))}</>)}
             </div>
 
             {/* Pagination - Updated to match the image */}

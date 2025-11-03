@@ -21,6 +21,7 @@ import { FaSackDollar } from "react-icons/fa6";
 import FilterSidebar from "@/components/filtersidebar";
 import { apiFetch } from "@/lib/api";
 import { PlatformIcons } from "@/components/ui/platformIcons";
+import { LoadingState } from "@/components/loadingAndEmpty";
 
 interface Job {
   id: string;
@@ -43,10 +44,11 @@ interface Job {
   icon: string;
 }
 
-const CampaignList = ({jobs}) => {
+const CampaignList = ({ jobs ,loading}) => {
   const pagination = true;
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const itemsPerPage = 5;
 
@@ -227,223 +229,237 @@ const CampaignList = ({jobs}) => {
           </span>
         ))}
       </div>
-      <span className="text-white/90 text-xs">{`${filteredJobs.length} campaigns found`}</span>
-      <div className="space-y-4">
-        {(pagination ? paginatedJobs : filteredJobs.slice(0, 7)).map((job) => (
-          <div
-            key={job.id}
-            className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 relative"
-          >
-            {/* Mobile layout */}
-            <div className="md:hidden flex flex-col space-y-4">
-              {/* Row 1: Image, Status, Price, Menu */}
-              <div className="flex items-center justify-between">
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-full bg-white flex-shrink-0 flex items-center justify-center overflow-hidden">
-                    <Image
-                      src={job.logo || "/placeholder.svg"}
-                      alt="brand logo"
-                      width={48}
-                      height={48}
-                      className="rounded-full"
-                    />
-                  </div>
-                  {job.icon === "gavel" ? (
-                    <span className="absolute left-8 -bottom-4 bg-white rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
-                      <Gavel
-                        size={20}
-                        className="text-black/80 max-md:w-3 max-md:h-3"
-                      />
-                    </span>
-                  ) : (
-                    <span className="absolute left-8 -bottom-4 bg-black/90 rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
-                      <FaSackDollar
-                        size={14}
-                        className="text-white max-md:w-3 max-md:h-3"
-                      />
-                    </span>
-                  )}
-                </div>
+      {loading ? (
+        <LoadingState message="Loading Campaigns..." />
+      ) : (
+        <>
+          <span className="text-white/90 text-xs">{`${filteredJobs.length} campaigns found`}</span>
+          <div className="space-y-4">
+            {(pagination ? paginatedJobs : filteredJobs.slice(0, 7)).map(
+              (job) => (
+                <div
+                  key={job.id}
+                  className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 relative"
+                >
+                  {/* Mobile layout */}
+                  <div className="md:hidden flex flex-col space-y-4">
+                    {/* Row 1: Image, Status, Price, Menu */}
+                    <div className="flex items-center justify-between">
+                      <div className="relative">
+                        <div className="w-12 h-12 rounded-full bg-white flex-shrink-0 flex items-center justify-center overflow-hidden">
+                          <Image
+                            src={job.logo || "/placeholder.svg"}
+                            alt="brand logo"
+                            width={48}
+                            height={48}
+                            className="rounded-full"
+                          />
+                        </div>
+                        {job.icon === "gavel" ? (
+                          <span className="absolute left-8 -bottom-4 bg-white rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
+                            <Gavel
+                              size={20}
+                              className="text-black/80 max-md:w-3 max-md:h-3"
+                            />
+                          </span>
+                        ) : (
+                          <span className="absolute left-8 -bottom-4 bg-black/90 rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
+                            <FaSackDollar
+                              size={14}
+                              className="text-white max-md:w-3 max-md:h-3"
+                            />
+                          </span>
+                        )}
+                      </div>
 
-                <div className="flex items-center gap-2">
-                  {job.status === "Pending Applications" ? (
-                    <span className="bg-gray-400/20 border border-white text-white text-xs px-2 py-1 rounded-md md:rounded-full">
-                      Pending
-                    </span>
-                  ) : job.status === "Accepted Jobs" ? (
-                    <span className="bg-[#50be4a] border border-[#45e368] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
-                      Accepted
-                    </span>
-                  ) : (
-                    <span className="bg-[#8BC34A] border border-[#8BC34A] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
-                      Completed
-                    </span>
-                  )}
-                </div>
-              </div>
+                      <div className="flex items-center gap-2">
+                        {job.status === "Pending Applications" ? (
+                          <span className="bg-gray-400/20 border border-white text-white text-xs px-2 py-1 rounded-md md:rounded-full">
+                            Pending
+                          </span>
+                        ) : job.status === "Accepted Jobs" ? (
+                          <span className="bg-[#50be4a] border border-[#45e368] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
+                            Accepted
+                          </span>
+                        ) : (
+                          <span className="bg-[#8BC34A] border border-[#8BC34A] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
+                            Completed
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-              {/* Row 2: Title */}
-              <Link href={`/dashboard/brand/jobs/${job.id}`}>
-                <h3 className="text-white font-medium">{job.title}</h3>
-              </Link>
-
-              {/* Row 3: Platform logos */}
-              <PlatformIcons platforms={job.platforms}/>
-              {/* Row 4: Description */}
-              <p className="text-white text-sm font-light">{job.description}</p>
-
-              {/* Row 5: Nano */}
-              {job.followerSize ? (
-                <div className="flex items-center gap-2 text-white text-sm font-light">
-                  <Users className="w-4 h-4" />
-                  {job.followerSize}
-                </div>
-              ) : null}
-
-              {/* Row 6: UGC */}
-              <div className="flex items-center gap-1 text-white text-xs font-light">
-                <Briefcase className="w-4 h-4" />
-                {job.contentType}
-              </div>
-
-              {/* Row 7: Paid */}
-              <div className="flex items-center gap-1 text-white text-sm font-light">
-                <DollarSign className="w-4 h-4" />
-                {job.collaborationType}
-              </div>
-
-              <div className="flex items-center gap-1 text-white text-sm font-light">
-                Type: {job.jobType}
-              </div>
-
-              {/* Row 8: Bids/Applicants */}
-              <div className="text-white text-sm">
-                {job.bids > 0 ? `${job.bids} Bids` : "0 Bids"}
-              </div>
-            </div>
-
-            {/* Desktop layout */}
-            <div className="hidden md:flex items-start gap-4">
-              <div className="relative">
-                <div className=" w-[100px] h-[100px] rounded-full bg-white flex-shrink-0 flex items-center justify-center overflow-hidden">
-                  <Image
-                    src={job.logo || "/placeholder.svg"}
-                    alt="brand logo"
-                    width={100}
-                    height={100}
-                    className="rounded-full"
-                  />
-                </div>
-                {job.icon === "gavel" ? (
-                  <span className="absolute left-8 -bottom-4 bg-white rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
-                    <Gavel
-                      size={20}
-                      className="text-black/80 max-md:w-3 max-md:h-3"
-                    />
-                  </span>
-                ) : (
-                  <span className="absolute left-8 -bottom-4 bg-black/90 rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
-                    <FaSackDollar
-                      size={14}
-                      className="text-white max-md:w-3 max-md:h-3"
-                    />
-                  </span>
-                )}
-              </div>
-
-              <div className="flex-1">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex max-md:flex-col gap-2">
+                    {/* Row 2: Title */}
                     <Link href={`/dashboard/brand/jobs/${job.id}`}>
                       <h3 className="text-white font-medium">{job.title}</h3>
                     </Link>
+
                     {/* Row 3: Platform logos */}
-                    <PlatformIcons platforms={job.platforms}></PlatformIcons>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      {job.status === "Pending Applications" ? (
-                        <span className="bg-gray-400 border border-white text-white font-light text-[11px] px-2 py-1 rounded-md">
-                          Pending
-                        </span>
-                      ) : job.status === "Accepted Jobs" ? (
-                        <span className="bg-[#50be4a] border border-[#45e368] text-black font-light text-[11px] px-2 py-1 rounded-md">
-                          Accepted
-                        </span>
-                      ) : job.status === "Completed Jobs" ? (
-                        <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                          Completed
-                        </span>
-                      ) : job.status === "Jobs In Progress" ? (
-                        <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                          In Progress
-                        </span>
-                      ) : job.status === "Submitted Jobs" ? (
-                        <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                          Submitted
-                        </span>
-                      ) : job.status === "Declined Jobs" ? (
-                        <span className="bg-red-400 border border-red-400 text-black font-light text-[11px] px-2 py-1 rounded-md">
-                          Rejected
-                        </span>
-                      ) : job.status === "Pending Applications" ? (
-                        <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                          Pending
-                        </span>
-                      ) : job.status === "Submitted Jobs" ? (
-                        <span className="bg-blue-500 border border-blue-500 text-black font-light text-[11px] px-2 py-1 rounded-md">
-                          Submitted
-                        </span>
-                      ) : job.status === "Declined Jobs" ? (
-                        <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                          Declined
-                        </span>
-                      ) : (
-                        <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                          Completed
-                        </span>
-                      )}
+                    <PlatformIcons platforms={job.platforms} />
+                    {/* Row 4: Description */}
+                    <p className="text-white text-sm font-light">
+                      {job.description}
+                    </p>
+
+                    {/* Row 5: Nano */}
+                    {job.followerSize ? (
+                      <div className="flex items-center gap-2 text-white text-sm font-light">
+                        <Users className="w-4 h-4" />
+                        {job.followerSize}
+                      </div>
+                    ) : null}
+
+                    {/* Row 6: UGC */}
+                    <div className="flex items-center gap-1 text-white text-xs font-light">
+                      <Briefcase className="w-4 h-4" />
+                      {job.contentType}
                     </div>
-                  </div>
-                </div>
 
-                <p className="text-white text-sm mb-4 font-light">
-                  {job.description}
-                </p>
-
-                <div className="flex flex-wrap items-center gap-4">
-                  {job.followerSize ? (
-                    <div className="flex items-center gap-2 text-white text-sm font-light">
-                      <Users className="w-5 h-5" />
-                      {job.followerSize}
+                    {/* Row 7: Paid */}
+                    <div className="flex items-center gap-1 text-white text-sm font-light">
+                      <DollarSign className="w-4 h-4" />
+                      {job.collaborationType}
                     </div>
-                  ) : null}
 
-                  <div className="flex items-center gap-1 text-white text-xs font-light">
-                    <Briefcase className="w-5 h-5" />
-                    {job.contentType}
-                  </div>
+                    <div className="flex items-center gap-1 text-white text-sm font-light">
+                      Type: {job.jobType}
+                    </div>
 
-                  <div className="flex items-center gap-1 text-white text-sm font-light">
-                    <DollarSign className="w-5 h-5" />
-                    {job.collaborationType}
-                  </div>
-
-                  <div className="flex items-center gap-1 text-white text-sm font-light">
-                    Type: {job.jobType}
-                  </div>
-
-                  <div className="ml-auto text-white text-xs font-light">
+                    {/* Row 8: Bids/Applicants */}
                     <div className="text-white text-sm">
                       {job.bids > 0 ? `${job.bids} Bids` : "0 Bids"}
                     </div>
                   </div>
+
+                  {/* Desktop layout */}
+                  <div className="hidden md:flex items-start gap-4">
+                    <div className="relative">
+                      <div className=" w-[100px] h-[100px] rounded-full bg-white flex-shrink-0 flex items-center justify-center overflow-hidden">
+                        <Image
+                          src={job.logo || "/placeholder.svg"}
+                          alt="brand logo"
+                          width={100}
+                          height={100}
+                          className="rounded-full"
+                        />
+                      </div>
+                      {job.icon === "gavel" ? (
+                        <span className="absolute left-8 -bottom-4 bg-white rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
+                          <Gavel
+                            size={20}
+                            className="text-black/80 max-md:w-3 max-md:h-3"
+                          />
+                        </span>
+                      ) : (
+                        <span className="absolute left-8 -bottom-4 bg-black/90 rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
+                          <FaSackDollar
+                            size={14}
+                            className="text-white max-md:w-3 max-md:h-3"
+                          />
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex max-md:flex-col gap-2">
+                          <Link href={`/dashboard/brand/jobs/${job.id}`}>
+                            <h3 className="text-white font-medium">
+                              {job.title}
+                            </h3>
+                          </Link>
+                          {/* Row 3: Platform logos */}
+                          <PlatformIcons
+                            platforms={job.platforms}
+                          ></PlatformIcons>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            {job.status === "Pending Applications" ? (
+                              <span className="bg-gray-400 border border-white text-white font-light text-[11px] px-2 py-1 rounded-md">
+                                Pending
+                              </span>
+                            ) : job.status === "Accepted Jobs" ? (
+                              <span className="bg-[#50be4a] border border-[#45e368] text-black font-light text-[11px] px-2 py-1 rounded-md">
+                                Accepted
+                              </span>
+                            ) : job.status === "Completed Jobs" ? (
+                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
+                                Completed
+                              </span>
+                            ) : job.status === "Jobs In Progress" ? (
+                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
+                                In Progress
+                              </span>
+                            ) : job.status === "Submitted Jobs" ? (
+                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
+                                Submitted
+                              </span>
+                            ) : job.status === "Declined Jobs" ? (
+                              <span className="bg-red-400 border border-red-400 text-black font-light text-[11px] px-2 py-1 rounded-md">
+                                Rejected
+                              </span>
+                            ) : job.status === "Pending Applications" ? (
+                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
+                                Pending
+                              </span>
+                            ) : job.status === "Submitted Jobs" ? (
+                              <span className="bg-blue-500 border border-blue-500 text-black font-light text-[11px] px-2 py-1 rounded-md">
+                                Submitted
+                              </span>
+                            ) : job.status === "Declined Jobs" ? (
+                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
+                                Declined
+                              </span>
+                            ) : (
+                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
+                                Completed
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-white text-sm mb-4 font-light">
+                        {job.description}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-4">
+                        {job.followerSize ? (
+                          <div className="flex items-center gap-2 text-white text-sm font-light">
+                            <Users className="w-5 h-5" />
+                            {job.followerSize}
+                          </div>
+                        ) : null}
+
+                        <div className="flex items-center gap-1 text-white text-xs font-light">
+                          <Briefcase className="w-5 h-5" />
+                          {job.contentType}
+                        </div>
+
+                        <div className="flex items-center gap-1 text-white text-sm font-light">
+                          <DollarSign className="w-5 h-5" />
+                          {job.collaborationType}
+                        </div>
+
+                        <div className="flex items-center gap-1 text-white text-sm font-light">
+                          Type: {job.jobType}
+                        </div>
+
+                        <div className="ml-auto text-white text-xs font-light">
+                          <div className="text-white text-sm">
+                            {job.bids > 0 ? `${job.bids} Bids` : "0 Bids"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              )
+            )}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       {/* Pagination - Updated to match the image */}
       <div className="flex justify-center items-center mt-6 gap-2">

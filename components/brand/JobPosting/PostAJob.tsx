@@ -14,7 +14,7 @@ import { usePathname } from "next/navigation";
 export default function JobPostingForm() {
   const [activeTab, setActiveTab] = useState<"public" | "direct">("public");
   const [currentStep, setCurrentStep] = useState(1);
-  const [isSubmitting,setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const totalSteps = 4;
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>(
@@ -63,39 +63,39 @@ export default function JobPostingForm() {
   };
 
   const handleSubmit = async (data: any) => {
-    setIsSubmitting(true)
-  try {
-    const response = await apiPost("/brand/post-job", {
-      data,
-      type: activeTab,
-    });
+    setIsSubmitting(true);
+    try {
+      const response = await apiPost("/brand/post-job", {
+        data,
+        type: activeTab,
+      });
 
-    if (!response.success) {
+      if (!response.success) {
+        toast({
+          variant: "destructive",
+          title: "Failed to post the job",
+          description: "Please try Again",
+        });
+      }
+
       toast({
-        variant:"destructive",
-        title:"Failed to post the job",
-        description:"Please try Again"
-      })  
+        variant: "success",
+        title: "Job Posted successfully",
+        description: "",
+      });
+
+      router.push("/dashboard/brand");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Job Posting Failed",
+        description: error.message || "Please try again",
+      });
+    } finally {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      setIsSubmitting(false);
     }
-
-    toast({
-      variant: "success",
-      title: "Job Posted successfully",
-      description: "",
-    });
-
-    router.push("/dashboard/brand");
-  } catch (error: any) {
-    toast({
-      variant: "destructive",
-      title: "Job Posting Failed",
-      description: error.message || "Please try again",
-    });
-  }finally{
-    await new Promise((resolve)=> setTimeout(resolve,3000))
-    setIsSubmitting(false)
-  }
-};
+  };
 
   const getStepDescription = () => {
     switch (currentStep) {
@@ -155,14 +155,32 @@ export default function JobPostingForm() {
         </div>
       </div>
 
-      {/* Progress Bar - only show for public job */}
-      {
+      <div className="w-full mb-8">
+        <div className="mb-2">
+          <span className="text-sm font-medium text-epiclinx-teal">
+            Step {currentStep}/{totalSteps}.{" "}
+            {currentStep === 1 && "Campaign Overview"}
+            {currentStep === 2 && "Content & Goals"}
+            {currentStep === 3 && "Payment & Collaboration"}
+            {currentStep === 4 && "Final Touches"}
+          </span>
+        </div>
+
+        <div className="h-1 w-full bg-gray-700 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-epiclinx-teal transition-all duration-500 ease-in-out"
+            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* {
         <ProgressBar
           currentStep={currentStep}
           totalSteps={totalSteps}
           className="mb-8"
         />
-      }
+      } */}
 
       {/* Form Content */}
       <div className="transition-all duration-500 ease-in-out">

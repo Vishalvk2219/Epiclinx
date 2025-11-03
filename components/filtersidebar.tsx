@@ -77,7 +77,7 @@ export default function FilterSidebar({
   followers: string[];
   platforms: string[];
   location: string;
-  featured: boolean;
+  featured?: boolean;
   jobType?: string;
   onChange: (newFilters: {
     categories: string[];

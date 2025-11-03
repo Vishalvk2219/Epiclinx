@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { apiFetch, apiPost } from "@/lib/api";
 import { IUser } from "@/models/User";
+import { LoadingState } from "./loadingAndEmpty";
 
 type Creator = {
   id: number;
@@ -51,6 +52,7 @@ export default function SpotlightedCreators({
 }) {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [loading, setLoading] = useState(true);
   const [creators, setCreators] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const itemsPerPage = 8;
@@ -63,208 +65,8 @@ export default function SpotlightedCreators({
     featured: true,
   });
 
-  // const creators: Creator[] = [
-  //   {
-  //     id: 1,
-  //     name: "Courtney Henry",
-  //     image: "/insta2.png",
-  //     rating: "4,8",
-  //     followers: 1344,
-  //     location: "New York",
-  //     categories: ["Lifestyle"],
-  //     platforms: ["instagram", "tiktok"],
-  //     unlocked: false,
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Courtney Henry",
-  //     image: "/insta2.png",
-  //     rating: "4,8",
-  //     followers: 1344,
-  //     location: "New York",
-  //     categories: ["Lifestyle"],
-  //     platforms: ["instagram", "tiktok"],
-  //     unlocked: false,
-  //   },
-  //   {
-  //     id: 3,
-  //     name: "Kathryn Murphy",
-  //     image: "/insta3.png",
-  //     rating: "5,0",
-  //     followers: 12022,
-  //     location: "Washington DC",
-  //     categories: ["Fashion", "Beauty"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 4,
-  //     name: "Robert Fox",
-  //     image: "/insta4.png",
-  //     rating: "5,0",
-  //     followers: 2650,
-  //     location: "Washington DC",
-  //     categories: ["Lifestyle", "Fitness"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 5,
-  //     name: "Cameron Williamson",
-  //     image: "/insta5.png",
-  //     rating: "5,0",
-  //     followers: 10069,
-  //     location: "Washington DC",
-  //     categories: ["Travel", "Food"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 6,
-  //     name: "Courtney Henry",
-  //     image: "/insta2.png",
-  //     rating: "4,8",
-  //     followers: 1344,
-  //     location: "New York",
-  //     categories: ["Lifestyle"],
-  //     platforms: ["instagram", "tiktok"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 7,
-  //     name: "Kathryn Murphy",
-  //     image: "/insta3.png",
-  //     rating: "5,0",
-  //     followers: 12022,
-  //     location: "Washington DC",
-  //     categories: ["Fashion", "Beauty"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 8,
-  //     name: "Robert Fox",
-  //     image: "/insta4.png",
-  //     rating: "5,0",
-  //     followers: 2650,
-  //     location: "Washington DC",
-  //     categories: ["Lifestyle", "Fitness"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 9,
-  //     name: "Cameron Williamson",
-  //     image: "/insta5.png",
-  //     rating: "5,0",
-  //     followers: 10069,
-  //     location: "Washington DC",
-  //     categories: ["Travel", "Food"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 10,
-  //     name: "Courtney Henry",
-  //     image: "/insta2.png",
-  //     rating: "4,8",
-  //     followers: 1344,
-  //     location: "New York",
-  //     categories: ["Lifestyle"],
-  //     platforms: ["instagram", "tiktok"],
-  //     unlocked: false,
-  //   },
-  //   {
-  //     id: 11,
-  //     name: "Courtney Henry",
-  //     image: "/insta2.png",
-  //     rating: "4,8",
-  //     followers: 1344,
-  //     location: "New York",
-  //     categories: ["Lifestyle"],
-  //     platforms: ["instagram", "tiktok"],
-  //     unlocked: false,
-  //   },
-  //   {
-  //     id: 12,
-  //     name: "Kathryn Murphy",
-  //     image: "/insta3.png",
-  //     rating: "5,0",
-  //     followers: 12022,
-  //     location: "Washington DC",
-  //     categories: ["Fashion", "Beauty"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 13,
-  //     name: "Robert Fox",
-  //     image: "/insta4.png",
-  //     rating: "5,0",
-  //     followers: 2650,
-  //     location: "Washington DC",
-  //     categories: ["Lifestyle", "Fitness"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 14,
-  //     name: "Cameron Williamson",
-  //     image: "/insta5.png",
-  //     rating: "5,0",
-  //     followers: 10069,
-  //     location: "Washington DC",
-  //     categories: ["Travel", "Food"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 15,
-  //     name: "Courtney Henry",
-  //     image: "/insta2.png",
-  //     rating: "4,8",
-  //     followers: 1344,
-  //     location: "New York",
-  //     categories: ["Lifestyle"],
-  //     platforms: ["instagram", "tiktok"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 16,
-  //     name: "Kathryn Murphy",
-  //     image: "/insta3.png",
-  //     rating: "5,0",
-  //     followers: 12022,
-  //     location: "Washington DC",
-  //     categories: ["Fashion", "Beauty"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 17,
-  //     name: "Robert Fox",
-  //     image: "/insta4.png",
-  //     rating: "5,0",
-  //     followers: 2650,
-  //     location: "Washington DC",
-  //     categories: ["Lifestyle", "Fitness"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  //   {
-  //     id: 18,
-  //     name: "Cameron Williamson",
-  //     image: "/insta5.png",
-  //     rating: "5,0",
-  //     followers: 10069,
-  //     location: "Washington DC",
-  //     categories: ["Travel", "Food"],
-  //     platforms: ["instagram", "tiktok", "youtube"],
-  //     unlocked: true,
-  //   },
-  // ]
-
   const allCreators = async () => {
+    setLoading(true);
     try {
       const data = await apiFetch("/creator");
       const requiredCreatorsField = (data?.creators || []).map(
@@ -291,6 +93,8 @@ export default function SpotlightedCreators({
     } catch (error: any) {
       console.log("Failed to fetch creators...", error);
       setCreators([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -298,7 +102,6 @@ export default function SpotlightedCreators({
     allCreators();
   }, []);
 
-  // Filter creators based on search and filters
   const filteredCreators = creators.filter((creator) => {
     // Search filter
     if (
@@ -448,7 +251,7 @@ export default function SpotlightedCreators({
 
         <div className="mb-6 flex items-center gap-3">
           <FilterSidebar
-            openSidebar={()=>setSidebarOpen(true)}
+            openSidebar={() => setSidebarOpen(true)}
             isOpen={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
             categories={filters.categories}
@@ -496,109 +299,120 @@ export default function SpotlightedCreators({
             </span>
           ))}
         </div>
-        <span className="text-white/90 text-xs">{`${filteredCreators?.length} creators found`}</span>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {(pagination ? paginatedCreators : filteredCreators.slice(0, 7)).map(
-            (creator) => (
-              <div
-                key={creator.id}
-                className={`overflow-hidden rounded-3xl border border-gray-800 ${bgColor}`}
-              >
-                <div className="relative h-[300px] w-full overflow-hidden">
-                  <Image
-                    src={creator.image || "/placeholder.svg"}
-                    alt={creator.name}
-                    fill
-                    className="object-cover center rounded-3xl -mt-1"
-                  />
-                  <div className="absolute bottom-5 left-5 flex items-center gap-1 rounded-full text-white">
-                    <Star className="h-7 w-7 fill-[#ffffff] text-[#ffffff]" />
-                    <span className="text-lg font-light">{creator.rating}</span>
-                  </div>
-                  <div className="absolute bottom-5 right-5 flex items-center gap-2">
-                    {creator.platforms.includes("instagram") && (
-                      <a
-                        href={`${creator.instagram}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <PiInstagramLogoFill className="w-7 h-7 text-[#ffffff]" />
-                      </a>
-                    )}
-                    {creator.platforms.includes("tiktok") && (
-                      <a
-                        href={`${creator.tiktok}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <PiTiktokLogoFill className="w-7 h-7 text-[#ffffff]" />
-                      </a>
-                    )}
-                    {creator.platforms.includes("youtube") && (
-                      <a
-                        href={`https://www.youtube.com/c/${creator.name}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <FaYoutube className="w-7 h-7 text-[#ffffff]" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="mb-3 flex flex-wrap gap-2">
-                    {creator.categories.map((category) => (
-                      <span
-                        key={category}
-                        className={`rounded-full px-3 py-2 text-xs font-medium ${
-                          category === "Lifestyle"
-                            ? "bg-epiclinx-semiteal text-black"
-                            : "bg-epiclinx-semiteal text-black"
-                        }`}
-                      >
-                        {category}
+        {loading ? (
+          <LoadingState message="Loading Creators..." />
+        ) : (
+          <>
+            <span className="text-white/90 text-xs">{`${filteredCreators?.length} creators found`}</span>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {(pagination
+                ? paginatedCreators
+                : filteredCreators.slice(0, 7)
+              ).map((creator) => (
+                <div
+                  key={creator.id}
+                  className={`overflow-hidden rounded-3xl border border-gray-800 ${bgColor}`}
+                >
+                  <div className="relative h-[300px] w-full overflow-hidden">
+                    <Image
+                      src={creator.image || "/placeholder.svg"}
+                      alt={creator.name}
+                      fill
+                      className="object-cover center rounded-3xl -mt-1"
+                    />
+                    <div className="absolute bottom-5 left-5 flex items-center gap-1 rounded-full text-white">
+                      <Star className="h-7 w-7 fill-[#ffffff] text-[#ffffff]" />
+                      <span className="text-lg font-light">
+                        {creator.rating}
                       </span>
-                    ))}
+                    </div>
+                    <div className="absolute bottom-5 right-5 flex items-center gap-2">
+                      {creator.platforms.includes("instagram") && (
+                        <a
+                          href={`${creator.instagram}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <PiInstagramLogoFill className="w-7 h-7 text-[#ffffff]" />
+                        </a>
+                      )}
+                      {creator.platforms.includes("tiktok") && (
+                        <a
+                          href={`${creator.tiktok}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <PiTiktokLogoFill className="w-7 h-7 text-[#ffffff]" />
+                        </a>
+                      )}
+                      {creator.platforms.includes("youtube") && (
+                        <a
+                          href={`https://www.youtube.com/c/${creator.name}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <FaYoutube className="w-7 h-7 text-[#ffffff]" />
+                        </a>
+                      )}
+                    </div>
                   </div>
-                  <h3 className={`mb-3 text-lg font-bold ${textColor}`}>
-                    {creator.name}
-                  </h3>
-                  <div
-                    className={`mb-1 flex items-center gap-2 text-sm ${textColor}`}
-                  >
-                    <Users className="h-4 w-4" />
-                    <span>{creator.followers.toLocaleString()} followers</span>
-                  </div>
-                  <div
-                    className={`mb-4 flex items-center gap-2 text-sm ${textColor}`}
-                  >
-                    <MapPin className="h-4 w-4" />
-                    <span>{creator.location}</span>
-                  </div>
+                  <div className="p-4">
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      {creator.categories.map((category) => (
+                        <span
+                          key={category}
+                          className={`rounded-full px-3 py-2 text-xs font-medium ${
+                            category === "Lifestyle"
+                              ? "bg-epiclinx-semiteal text-black"
+                              : "bg-epiclinx-semiteal text-black"
+                          }`}
+                        >
+                          {category}
+                        </span>
+                      ))}
+                    </div>
+                    <h3 className={`mb-3 text-lg font-bold ${textColor}`}>
+                      {creator.name}
+                    </h3>
+                    <div
+                      className={`mb-1 flex items-center gap-2 text-sm ${textColor}`}
+                    >
+                      <Users className="h-4 w-4" />
+                      <span>
+                        {creator.followers.toLocaleString()} followers
+                      </span>
+                    </div>
+                    <div
+                      className={`mb-4 flex items-center gap-2 text-sm ${textColor}`}
+                    >
+                      <MapPin className="h-4 w-4" />
+                      <span>{creator.location}</span>
+                    </div>
 
-                  <Link
-                    href={`/profile/creator/${creator.id}`}
-                    className={`block w-full rounded-full py-3 btn-hover mb-5 text-center text-sm font-medium ${
-                      creator.unlocked
-                        ? "bg-[#00e0ca] text-black"
-                        : "bg-[#042c30] text-white"
-                    }`}
-                    onClick={(e) => {
-                      if (!creator.unlocked) {
-                        e.preventDefault();
-                      }
-                    }}
-                  >
-                    {creator.unlocked ? "Link me with them" : "Unlock"}
-                  </Link>
+                    <Link
+                      href={`/profile/creator/${creator.id}`}
+                      className={`block w-full rounded-full py-3 btn-hover mb-5 text-center text-sm font-medium ${
+                        creator.unlocked
+                          ? "bg-[#00e0ca] text-black"
+                          : "bg-[#042c30] text-white"
+                      }`}
+                      onClick={(e) => {
+                        if (!creator.unlocked) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      {creator.unlocked ? "Link me with them" : "Unlock"}
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            )
-          )}
-        </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Pagination - Updated to match the image */}
-        {pagination && (
+        {!loading && pagination && (
           <div className="flex justify-center items-center gap-2 !my-10">
             <button
               onClick={() => goToPage(currentPage - 1)}

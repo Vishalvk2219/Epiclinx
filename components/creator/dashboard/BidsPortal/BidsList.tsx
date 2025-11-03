@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Calendar, Search, Target, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Calendar,
+  Search,
+  Target,
+  ChevronLeft,
+  ChevronRight,
+  FileSearch,
+} from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Separator } from "@/components/ui/separator";
 import { PlatformIcons } from "@/components/ui/platformIcons";
@@ -32,7 +39,9 @@ export function BidssList() {
         searchTerm &&
         !(
           (bid.campaignName &&
-            bid.campaignName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            bid.campaignName
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) ||
           (bid.brandName &&
             bid.brandName.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (bid.description &&
@@ -66,7 +75,9 @@ export function BidssList() {
       if (
         !filters.platforms.includes("All") &&
         !bid.campaignPlatforms.some((p: string) =>
-          filters.platforms.map((fp) => fp.toLowerCase()).includes(p.toLowerCase())
+          filters.platforms
+            .map((fp) => fp.toLowerCase())
+            .includes(p.toLowerCase())
         )
       ) {
         return false;
@@ -83,7 +94,10 @@ export function BidssList() {
     })
     .sort((a, b) => {
       if (filters.sort === "Most Recent") {
-        return new Date(b.bidCreatedAt).getTime() - new Date(a.bidCreatedAt).getTime();
+        return (
+          new Date(b.bidCreatedAt).getTime() -
+          new Date(a.bidCreatedAt).getTime()
+        );
       } else if (filters.sort === "Highest Bid") {
         return Number.parseInt(b.bidAmount) - Number.parseInt(a.bidAmount);
       } else if (filters.sort === "Lowest Bid") {
@@ -118,7 +132,7 @@ export function BidssList() {
   const fetchBids = async () => {
     try {
       setLoading(true);
-      const response = await apiFetch("/bids/fetch-all-bids");
+      const response: any = await apiFetch("/bids/fetch-all-bids");
       if (response.success) {
         const formattedBids = response.allApplications.map((bid: any) => ({
           bidId: bid._id,
@@ -150,12 +164,6 @@ export function BidssList() {
     fetchBids();
   }, []);
 
-  if (loading)
-    return <p className="text-gray-300 text-center py-10">Loading your bids...</p>;
-
-  if (bids.length === 0)
-    return <p className="text-gray-400 text-center py-10">No bids found.</p>;
-
   return (
     <div>
       <h2 className="text-2xl font-bold text-white mb-6">Bids Overview</h2>
@@ -174,77 +182,103 @@ export function BidssList() {
       </div>
 
       <div className="space-y-3 mt-6">
-        {currentBids.map((bid) => (
-          <div
-            key={bid.bidId}
-            className="flex justify-between items-center gap-6 bg-white/10 p-5 rounded-3xl hover:bg-white/15 transition-all flex-col md:flex-row w-full"
-          >
-            {/* Brand */}
-            <div className="flex items-center gap-3 min-w-[150px] w-full md:w-[200px] md:basis-1/4 flex-shrink-0">
-              <Image
-                src={bid.brandLogo || "https://via.placeholder.com/40"}
-                alt="Brand Logo"
-                width={45}
-                height={45}
-                className="rounded-full object-cover"
-              />
-              <span className="text-epiclinx-teal font-semibold text-sm truncate w-full md:w-auto">
-                <Link
-                  href={`/dashboard/creator/apply-for-job?id=${bid.campaignId}`}
-                  className="hover:underline"
-                >
-                  {bid.brandName || "Unknown Brand"}
-                </Link>
-              </span>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-10 text-gray-300">
+            <div className="relative">
+              <div className="h-10 w-10 border-4 border-gray-600 border-t-epiclinx-teal rounded-full animate-spin" />
             </div>
-
-            <Separator orientation="vertical" className="hidden md:block h-10 bg-white/40 mx-4" />
-
-            {/* Campaign Info */}
-            <div className="flex flex-col justify-center flex-1 md:w-[320px] w-full">
-              <Link
-                href={`/dashboard/creator/apply-for-job?id=${bid.campaignId}`}
-                className="font-medium hover:underline text-white"
-              >
-                {bid.campaignName || "Unnamed Campaign"}
-              </Link>
-              <div className="flex items-center gap-2 text-xs text-gray-300 mt-1">
-                <Target className="h-3 w-3 text-epiclinx-teal" />
-                <span>{bid.campaignGoal || "No goal"}</span>
-              </div>
-              <PlatformIcons platforms={bid.campaignPlatforms} />
-            </div>
-
-            <Separator orientation="vertical" className="hidden md:block h-10 bg-white/40 mx-4" />
-
-            {/* Bid Info */}
-            <div className="flex flex-col items-end md:items-center gap-1 md:w-[150px]">
-              <span className="text-epiclinx-teal font-medium text-lg">
-                ${bid.bidAmount || 0}
-              </span>
-              <span className="text-gray-400 text-xs flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {new Date(bid.bidCreatedAt).toLocaleDateString()}
-              </span>
-              <span
-                className={cn(
-                  "text-xs font-medium rounded-full px-3 py-1 border mt-1",
-                  bid.bidStatus === "accepted"
-                    ? "bg-epiclinx-teal text-black border-[#0ABAB5]"
-                    : bid.bidStatus === "rejected"
-                    ? "text-red-400 border-red-400"
-                    : "text-gray-400 border-gray-500"
-                )}
-              >
-                {bid.bidStatus === "accepted"
-                  ? "Accepted"
-                  : bid.bidStatus === "rejected"
-                  ? "Rejected"
-                  : "Pending"}
-              </span>
-            </div>
+            <p className="mt-3 text-sm text-gray-400">Loading your bids...</p>
           </div>
-        ))}
+        ) : (
+          <>
+            {currentBids.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                <FileSearch className="h-12 w-12 mb-3 text-gray-500" />
+                <p className="text-lg">No bids found</p>
+              </div>
+            ) : (
+              <>
+                {currentBids.map((bid) => (
+                  <div
+                    key={bid.bidId}
+                    className="flex justify-between items-center gap-6 bg-white/10 p-5 rounded-3xl hover:bg-white/15 transition-all flex-col md:flex-row w-full"
+                  >
+                    {/* Brand */}
+                    <div className="flex items-center gap-3 min-w-[150px] w-full md:w-[200px] md:basis-1/4 flex-shrink-0">
+                      <Image
+                        src={bid.brandLogo || "https://via.placeholder.com/40"}
+                        alt="Brand Logo"
+                        width={45}
+                        height={45}
+                        className="rounded-full object-cover"
+                      />
+                      <span className="text-epiclinx-teal font-semibold text-sm truncate w-full md:w-auto">
+                        <Link
+                          href={`/dashboard/creator/apply-for-job?id=${bid.campaignId}`}
+                          className="hover:underline"
+                        >
+                          {bid.brandName || "Unknown Brand"}
+                        </Link>
+                      </span>
+                    </div>
+
+                    <Separator
+                      orientation="vertical"
+                      className="hidden md:block h-10 bg-white/40 mx-4"
+                    />
+
+                    {/* Campaign Info */}
+                    <div className="flex flex-col justify-center flex-1 md:w-[320px] w-full">
+                      <Link
+                        href={`/dashboard/creator/apply-for-job?id=${bid.campaignId}`}
+                        className="font-medium hover:underline text-white"
+                      >
+                        {bid.campaignName || "Unnamed Campaign"}
+                      </Link>
+                      <div className="flex items-center gap-2 text-xs text-gray-300 mt-1">
+                        <Target className="h-3 w-3 text-epiclinx-teal" />
+                        <span>{bid.campaignGoal || "No goal"}</span>
+                      </div>
+                      <PlatformIcons platforms={bid.campaignPlatforms} />
+                    </div>
+
+                    <Separator
+                      orientation="vertical"
+                      className="hidden md:block h-10 bg-white/40 mx-4"
+                    />
+
+                    {/* Bid Info */}
+                    <div className="flex flex-col items-end md:items-center gap-1 md:w-[150px]">
+                      <span className="text-epiclinx-teal font-medium text-lg">
+                        ${bid.bidAmount || 0}
+                      </span>
+                      <span className="text-gray-400 text-xs flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(bid.bidCreatedAt).toLocaleDateString()}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-xs font-medium rounded-full px-3 py-1 border mt-1",
+                          bid.bidStatus === "accepted"
+                            ? "bg-epiclinx-teal text-black border-[#0ABAB5]"
+                            : bid.bidStatus === "rejected"
+                            ? "text-red-400 border-red-400"
+                            : "text-gray-400 border-gray-500"
+                        )}
+                      >
+                        {bid.bidStatus === "accepted"
+                          ? "Accepted"
+                          : bid.bidStatus === "rejected"
+                          ? "Rejected"
+                          : "Pending"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </>
+        )}
       </div>
 
       {/* Pagination */}

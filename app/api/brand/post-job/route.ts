@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   try {
     connectDB();
     const body = await req.json();
-    const payload = await verifyToken();
+    const payload:any = await verifyToken();
     const jobData = {
       ...body.data,
       jobType: body.type,
