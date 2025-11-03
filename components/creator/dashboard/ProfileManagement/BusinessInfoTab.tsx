@@ -17,15 +17,10 @@ export default function BusinessInfoTab() {
 
   const [formData, setFormData] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  
   useEffect(() => {
     if (user) {
       setFormData(user);
-      // Redirect if user's role doesn't match the route
-      if (user?.role && user.role !== pathRole) {
-        parts[2] = user.role;
-        const newPathName = parts.join("/");
-        router.push(newPathName);
-      }
     }
   }, [user]);
 

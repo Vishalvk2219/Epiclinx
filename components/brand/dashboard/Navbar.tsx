@@ -13,27 +13,27 @@ import { useRouter } from "next/navigation";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-    const profileRef = useRef(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileRef = useRef(null);
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const router = useRouter()
+  const router = useRouter();
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const closeMenu = () => setMenuOpen(false);
 
-   useEffect(() => {
-      const handleClickOutside = (e: MouseEvent) => {
-        if (
-          profileRef.current &&
-          !profileRef.current.contains(e.target as Node)
-        ) {
-          setProfileMenuOpen(false);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
+        setProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   // Close menu when clicking escape key and handle body scroll
   useEffect(() => {
     const handleEscKey = (e: KeyboardEvent) => {
@@ -163,8 +163,17 @@ const Navbar = () => {
               >
                 Campaigns
               </Link>
+              <Link
+                href="/dashboard/brand/profile"
+                className={`hover:text-epiclinx-teal transition-all font-light ${
+                  pathname.startsWith("/dashboard/brand/profile")
+                    ? "text-[#00e0ca]"
+                    : ""
+                }`}
+              >
+                Profile
+              </Link>
             </div>
-
             {/* Post a Job Button */}
             <Link
               href="/dashboard/brand/post-a-job"
@@ -172,9 +181,9 @@ const Navbar = () => {
             >
               Post a Job
             </Link>
-            
+
             <div className="relative" ref={profileRef}>
-              <button onClick={() => setProfileMenuOpen(prev => !prev)}>
+              <button onClick={() => setProfileMenuOpen((prev) => !prev)}>
                 <Image
                   src={user?.profileImageUrl || "/emptyProfile.png"}
                   alt="Avatar"
@@ -191,13 +200,13 @@ const Navbar = () => {
                     className="px-4 py-2 hover:bg-gray-700"
                     onClick={() => setProfileMenuOpen(false)}
                   >
-                    Profile
+                    Edit Profile
                   </Link>
                   <button
                     className="px-4 py-2 text-left hover:bg-gray-700"
                     onClick={async () => {
                       await apiLogout();
-                      router.push("/dashboard/"+user?.role)
+                      router.push("/dashboard/" + user?.role);
                     }}
                   >
                     Logout
@@ -205,7 +214,6 @@ const Navbar = () => {
                 </div>
               )}
             </div>
-
 
             {/* Mobile menu icon */}
             <Menu
@@ -219,7 +227,7 @@ const Navbar = () => {
       {/* Backdrop overlay */}
       {menuOpen && (
         <>
-        <div className="mt-6 px-4">
+          <div className="mt-6 px-4">
             <span className="text-sm text-gray-400">Account</span>
             <button
               onClick={() => setProfileMenuOpen((prev) => !prev)}
@@ -247,7 +255,7 @@ const Navbar = () => {
                   className="px-4 py-2 text-left hover:bg-gray-700"
                   onClick={async () => {
                     await apiLogout();
-                    router.push("/dashboard/"+user?.role)
+                    router.push("/dashboard/" + user?.role);
                   }}
                 >
                   Logout
@@ -256,11 +264,11 @@ const Navbar = () => {
             )}
           </div>
 
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
-          onClick={closeMenu}
-          aria-hidden="true"
-        />
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
+            onClick={closeMenu}
+            aria-hidden="true"
+          />
         </>
       )}
 
@@ -291,7 +299,9 @@ const Navbar = () => {
             <NavMenuItem href="/dashboard/brand/campaigns">
               Campaign
             </NavMenuItem>
-            <NavMenuItem href="/dashboard/brand/post-a-job">Post a Job</NavMenuItem>
+            <NavMenuItem href="/dashboard/brand/post-a-job">
+              Post a Job
+            </NavMenuItem>
           </div>
 
           {/* Contact section */}

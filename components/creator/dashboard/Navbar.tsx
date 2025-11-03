@@ -197,8 +197,9 @@ const Navbar = () => {
                   <button
                     className="px-4 py-2 text-left hover:bg-gray-700"
                     onClick={async () => {
-                      await apiLogout();
                       router.push("/dashboard/"+user?.role)
+                      await apiLogout();
+                      
                     }}
                   >
                     Logout
@@ -246,8 +247,9 @@ const Navbar = () => {
                 <button
                   className="px-4 py-2 text-left hover:bg-gray-700"
                   onClick={async () => {
-                    await apiLogout();
                     router.push("/dashboard/"+user?.role)
+                    await apiLogout();
+                    
                   }}
                 >
                   Logout

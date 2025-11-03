@@ -4,7 +4,8 @@ import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import BusinessInfoTab from "@/components/creator/dashboard/ProfileManagement/BusinessInfoTab"
 import PaymentInfoTab from "./PaymentInfoTab"
-import AccountTab from "./AccountTabs"
+import AccountTab from "@/components/creator/dashboard/ProfileManagement/AccountTabs"
+// import AccountTab from "./AccountTabs"
 
 export default function ProfileManagement() {
   const [activeTab, setActiveTab] = useState("business-info")

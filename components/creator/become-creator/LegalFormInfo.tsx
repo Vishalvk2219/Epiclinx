@@ -197,7 +197,7 @@ export function LegalInfoForm({
       {sessionClientSecret!==null ? <CheckoutProvider
         stripe={stripePromise}
         options={{
-          fetchClientSecret:sessionClientSecret,
+          fetchClientSecret: async()=>sessionClientSecret,
           elementsOptions: {
             appearance: {
               theme: "night",

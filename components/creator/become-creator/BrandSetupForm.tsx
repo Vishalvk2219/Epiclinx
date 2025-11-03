@@ -329,7 +329,6 @@ export function MultiStepForm() {
                         description: result.error?.message,
                       });
                     } else {
-                      console.log(result)
                       const subscriptionResponse = await apiPut(
                         "/subscription",
                         {
@@ -337,7 +336,6 @@ export function MultiStepForm() {
                           stripeSessionId: result.session.id,
                         }
                       );
-                      console.log(subscriptionResponse);
                       const payload = {
                         email: formData.email,
                         subscription: subscriptionResponse.subscriptionId,
