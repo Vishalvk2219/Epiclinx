@@ -51,9 +51,10 @@ export async function POST(req: Request) {
       );
     }
 
-    await otpDoc.deleteOne();
-
-    await User.findByIdAndUpdate({email},{emailVerified:true},{new:true})
+    otpDoc.EmailVerified = true
+    otpDoc.save()
+    // await otpDoc.deleteOne();
+    // await User.findOneAndUpdate({email},{emailVerified:true},{new:true})
 
     return NextResponse.json({
       success: true,

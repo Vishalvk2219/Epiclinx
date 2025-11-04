@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
     await JobModel.findOneAndUpdate(
       { _id: jobId },
-      { $push: { bids: newBid._id },$set:{status:"Pending Jobs"} },
+      { $push: { bids: newBid._id }},
       { new: true }
     );
     return NextResponse.json(

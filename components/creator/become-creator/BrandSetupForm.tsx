@@ -79,6 +79,7 @@ export function MultiStepForm() {
   useEffect(() => {
     console.log("Inside useEffect");
     // Logged-in user should be logged out
+    apiLogout()
     if (
       searchParams.get("currency") &&
       searchParams.get("plan") &&
@@ -89,7 +90,7 @@ export function MultiStepForm() {
       setShowRestoredMsg(false);
       setShowExpiredMsg(false);
       apiLogout();
-      // useAuthStore.getState().clearUser();
+      useAuthStore.getState().clearUser();
       return;
     }
 

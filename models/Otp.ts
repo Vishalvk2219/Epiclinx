@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import mongoose, { Schema, Document, Model } from "mongoose";
+import { boolean } from "zod";
 
 export interface IOtp extends Document {
   email: string;
@@ -7,6 +8,7 @@ export interface IOtp extends Document {
   type: "signup" | "login" | "reset-password" | "2FA";
   expiresAt: Date;
   attempts: number;
+  EmailVerified:boolean;
   compareOtp(plainOtp: string): Promise<boolean>;
 }
 
@@ -19,6 +21,7 @@ const otpSchema = new Schema<IOtp>(
       enum: ["signup", "login", "reset-password", "2FA"],
       required: true,
     },
+    EmailVerified:{type:Boolean,default:false},
     expiresAt: {
       type: Date,
       required: true,

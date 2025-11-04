@@ -50,7 +50,7 @@ export function BrowseTabs({ show = true }: { show?: boolean }) {
   const [activeSection, setActiveSection] = useState<
     "campaigns" | "submissions"
   >("campaigns");
-  const getJobs = async () => {
+  const getJobs = async () => { 
     try {
       setLoading(true);
       const allBids = await apiFetch("/bids/fetch-all-bids");

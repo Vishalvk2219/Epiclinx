@@ -31,20 +31,29 @@ type FilterState = {
   featured: boolean;
 };
 
-type Creator = {
+interface Creator {
+  bidId: string;
   id: string;
+  bidStatus: "pending" | "Accepted" | "Rejected";
   name: string;
   avatar: string;
   rating: number;
   followers: number;
   location: string;
   bid: number;
+  proposal: string;
   categories: string[];
   tags: string[];
-  proposal: string;
-  platforms?: string[];
+  platformsWithLinks: {
+    instagram?: string;
+    facebook?: string;
+    tiktok?: string;
+    youtube?: string;
+    other?: string;
+  };
+  platforms: string[];
   unlocked?: boolean;
-};
+}
 
 export default function InfluencerList({ jobId }) {
   const pagination = false;
@@ -64,8 +73,8 @@ export default function InfluencerList({ jobId }) {
     if (!jobId) return;
     const fetchBids = async () => {
       try {
-        const bidsData = await apiFetch(`/bids?id=${jobId}`);
-        const requiredFieldBids = bidsData.bids.map((bids) => ({
+        const bidsData:any = await apiFetch(`/bids?id=${jobId}`);
+        const requiredFieldBids = bidsData.bids.map((bids:any) => ({
           bidId: bids._id,
           id: bids.creatorId._id,
           bidStatus: bids.status,
@@ -245,7 +254,7 @@ export default function InfluencerList({ jobId }) {
         throw new Error("Missing required parameters");
       }
 
-      const response = await apiPut("/bids/handle-bid", {
+      const response:any = await apiPut("/bids/handle-bid", {
         bidId,
         jobId,
         status,

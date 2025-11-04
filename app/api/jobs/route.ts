@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   try {
-    const decoded = await verifyToken();
+    const decoded:any = await verifyToken();
     
     if (!decoded) {
       return NextResponse.json(

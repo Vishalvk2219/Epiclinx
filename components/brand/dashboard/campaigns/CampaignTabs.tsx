@@ -23,6 +23,7 @@ import CampaignList from "./CampaignList";
 import { apiFetch } from "@/lib/api";
 import { PlatformIcons } from "@/components/ui/platformIcons";
 import { LoadingState } from "@/components/loadingAndEmpty";
+import { IJob } from "@/models/Job";
 
 interface Job {
   id: string;
@@ -31,7 +32,7 @@ interface Job {
   brand: string;
   description: string;
   platforms: string[];
-  requirements: string;
+  followerSize: string;
   payment: string;
   status:
     | "Pending Applications"
@@ -42,9 +43,15 @@ interface Job {
     | "Declined Jobs";
   applicants: number;
   bids: number;
+  collaborationType?: string;
   icon: string;
-  nano: boolean;
+  contentType?: string;
+  niche?: string[];
+  follower?: string;
+  location: string;
+  jobType: string;
 }
+
 
 export function CampaignTabs({ show = true }: { show?: boolean }) {
   const [activeTab, setActiveTab] = useState<string>("Pending Applications");
@@ -53,7 +60,7 @@ export function CampaignTabs({ show = true }: { show?: boolean }) {
   const [activeSection, setActiveSection] = useState<
     "campaigns" | "campaignStatus"
   >("campaigns");
-  const [jobs, setJobs] = useState([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const itemsPerPage = 5;
 
   const tabs = [
@@ -67,8 +74,8 @@ export function CampaignTabs({ show = true }: { show?: boolean }) {
   const getJobs = async () => {
     setLoading(true);
     try {
-      const companyJobs = await apiFetch("/jobs");
-      const requiredFieldJobs = (companyJobs.jobs || []).map((jobs) => ({
+      const companyJobs:any = await apiFetch("/jobs");
+      const requiredFieldJobs:Job = (companyJobs.jobs || []).map((jobs:any) => ({
         id: jobs._id,
         logo: jobs.companyId.profileImageUrl,
         title: jobs.campaignName,

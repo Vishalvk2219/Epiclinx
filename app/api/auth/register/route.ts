@@ -1,6 +1,7 @@
 import User from "@/models/User";
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/connect-db";
+import OTP from "@/models/Otp";
 
 export async function POST(req: Request) {
   try {
@@ -49,6 +50,13 @@ export async function POST(req: Request) {
       followers,
     };
 
+    const isVerified = await OTP.findOne({email:email,EmailVerified:true})
+    if (!isVerified){
+      return NextResponse.json(
+        {success:false,message:"Email not Verified or Wrong Email"},
+        {status:400}
+      )
+    }
     const user = await User.findOne({ email });
     const auth = true;
 
@@ -66,6 +74,7 @@ export async function POST(req: Request) {
         }
       });
 
+      user.emailVerified=true
       await user.save();
 
       return NextResponse.json({ success: true, user }, { status: 200 });

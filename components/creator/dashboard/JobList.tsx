@@ -51,7 +51,7 @@ export function JobsList({
   publicProfile?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<string>(
-    publicProfile ? "Completed Jobs" : "Pending Applications"
+    publicProfile ? "Completed Jobs" : "Pending"
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [activeSection, setActiveSection] = useState<"jobs" | "messages">(
@@ -63,7 +63,7 @@ export function JobsList({
   const tabs = publicProfile
     ? ["Completed Jobs"]
     : [
-        "Pending Applications",
+        "Pending",
         "Accepted Jobs",
         "Jobs In Progress",
         "Submitted Jobs",
@@ -74,6 +74,7 @@ export function JobsList({
   const allJobs = async () => {
     try {
       const fetchAllJobs = await apiFetch("/bids/fetch-all-bids");
+      console.log(fetchAllJobs);
       const requiredFieldJobs = (fetchAllJobs.allApplications || []).map(
         (bids) => ({
           id: bids.jobId._id,
@@ -84,7 +85,7 @@ export function JobsList({
           platforms: bids.jobId.selectedPlatforms,
           followerSize: followerRanges[bids.jobId.followerSize],
           payment: bids.jobId.budget,
-          status: bids.jobId.status,
+          status: bids.status === "Pending" ? bids.status : bids.jobId.status,
           collaborationType: bids.jobId.collaborationType,
           icon: bids.jobId.icon,
           contentType: bids.jobId.contentType,
@@ -92,7 +93,6 @@ export function JobsList({
           follower: bids.jobId.followerSize,
           location: bids.jobId.location || "",
           jobType: bids.jobId.jobType,
-          bidStatus: bids.status,
         })
       );
       setJobs(requiredFieldJobs);
@@ -222,7 +222,7 @@ export function JobsList({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {job.status === "Pending Applications" ? (
+                        {job.status === "Pending" ? (
                           <span className="bg-gray-400/20 border border-white text-white text-xs px-2 py-1 rounded-md md:rounded-full">
                             Pending
                           </span>
@@ -245,42 +245,6 @@ export function JobsList({
 
                     {/* Row 3: Platform logos */}
                     <PlatformIcons platforms={job.platforms} />
-                    {/* <div className="flex space-x-2">
-                      {job.platforms.map((platform, index) => (
-                        <div
-                          key={index}
-                          className="w-8 h-8 rounded-full bg-epiclinx-semiteal flex items-center justify-center"
-                        >
-                          {platform === "Instagram" && (
-                            <a
-                              href={`https://www.instagram.com`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <PiInstagramLogoFill className="w-5 h-5 text-black/80" />
-                            </a>
-                          )}
-                          {platform === "TikTok" && (
-                            <a
-                              href={`https://www.tiktok.com`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <PiTiktokLogoFill className="w-5 h-5 text-black/80" />
-                            </a>
-                          )}
-                          {platform === "Youtube" && (
-                            <a
-                              href={`https://www.youtube.com`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <FaYoutube className="w-5 h-5 text-black/80" />
-                            </a>
-                          )}
-                        </div>
-                      ))}
-                    </div> */}
 
                     {/* Row 4: Description */}
                     <p className="text-white text-sm font-light">
@@ -351,77 +315,37 @@ export function JobsList({
                             </h3>
                           </Link>
                           <PlatformIcons platforms={job.platforms} />
-                          {/* <div className="flex space-x-2">
-                            {job.platforms.map((platform, index) => (
-                              <a
-                                key={index}
-                                href={`https://www.${platform.toLowerCase()}.com`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-8 h-8 rounded-full bg-epiclinx-semiteal flex items-center justify-center"
-                              >
-                                {platform === "Instagram" && (
-                                  <div className="w-5 h-5 text-black/80">
-                                    <PiInstagramLogoFill className="w-full h-full" />
-                                  </div>
-                                )}
-                                {platform === "TikTok" && (
-                                  <div className="w-5 h-5 text-black/80">
-                                    <PiTiktokLogoFill className="w-full h-full" />
-                                  </div>
-                                )}
-                                {platform === "Youtube" && (
-                                  <div className="w-5 h-5 text-black/80">
-                                    <FaYoutube className="w-full h-full" />
-                                  </div>
-                                )}
-                              </a>
-                            ))}
-                          </div>*/}
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-2">
-                            {job.status === "Pending Applications" ? (
-                              <span className="bg-gray-400 border border-white text-white font-light text-[11px] px-2 py-1 rounded-md">
-                                Pending
-                              </span>
-                            ) : job.status === "Accepted Jobs" ? (
-                              <span className="bg-green-600 border border-green-400 text-black font-light text-[11px] px-2 py-1 rounded-md">
-                                Accepted
-                              </span>
-                            ) : job.status === "Completed Jobs" ? (
-                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                                Completed
-                              </span>
-                            ) : job.status === "Jobs In Progress" ? (
-                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                                In Progress
-                              </span>
-                            ) : job.status === "Submitted Jobs" ? (
-                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                                Submitted
-                              </span>
-                            ) : job.status === "Declined Jobs" ? (
-                              <span className="bg-red-400 border border-red-400 text-black font-light text-[11px] px-2 py-1 rounded-md">
-                                Rejected
-                              </span>
-                            ) : job.status === "Pending Applications" ? (
-                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                                Pending
-                              </span>
-                            ) : job.status === "Submitted Jobs" ? (
-                              <span className="bg-blue-500 border border-blue-500 text-black font-light text-[11px] px-2 py-1 rounded-md">
-                                Submitted
-                              </span>
-                            ) : job.status === "Declined Jobs" ? (
-                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                                Declined
-                              </span>
-                            ) : (
-                              <span className="bg-epiclinx-semiteal border border-epiclinx-semiteal text-black font-light text-[11px] px-2 py-1 rounded-md">
-                                Completed
-                              </span>
-                            )}
+                            {(() => {
+                              const statusStyles: Record<string, string> = {
+                                Pending:
+                                  "bg-gray-400/20 border border-gray-400 text-gray-200",
+                                "Accepted Jobs":
+                                  "bg-blue-500/20 border border-blue-400 text-blue-200",
+                                "Jobs In Progress":
+                                  "bg-yellow-500/20 border border-yellow-400 text-yellow-200",
+                                "Submitted Jobs":
+                                  "bg-purple-500/20 border border-purple-400 text-purple-200",
+                                "Completed Jobs":
+                                  "bg-green-500/20 border border-green-400 text-green-200",
+                                "Declined Jobs":
+                                  "bg-red-500/20 border border-red-400 text-red-200",
+                              };
+
+                              const style =
+                                statusStyles[job.status] ||
+                                "bg-gray-500/20 border border-gray-400 text-gray-200";
+
+                              return (
+                                <span
+                                  className={`${style} text-xs px-2 py-1 rounded-md md:rounded-full`}
+                                >
+                                  {job.status}
+                                </span>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -447,7 +371,7 @@ export function JobsList({
                         </div>
 
                         <div className="ml-auto text-white text-xs font-light">
-                          {job.status === "Pending Applications" ? (
+                          {job.status === "Pending" ? (
                             <button className="border border-red-500 bg-transparent rounded-full px-4 py-1 text-sm font-light text-red-500">
                               Cancel Application
                             </button>
@@ -467,69 +391,68 @@ export function JobsList({
               ))}
             </div>
 
-            {totalPages>1 ? (<div className="flex justify-center items-center mt-6 gap-2">
-              <button
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="flex items-center justify-center text-white font-light text-xs disabled:opacity-50 px-2"
-              >
-                <ChevronLeft size={16} className="mr-1" />
-                Previous
-              </button>
+            {totalPages > 1 ? (
+              <div className="flex justify-center items-center mt-6 gap-2">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="flex items-center justify-center text-white font-light text-xs disabled:opacity-50 px-2"
+                >
+                  <ChevronLeft size={16} className="mr-1" />
+                  Previous
+                </button>
 
-              {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-                
-                const pageNum = i + 1;
+                {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                  const pageNum = i + 1;
 
-                return (
-                  <button
-                    key={i}
-                    onClick={() => goToPage(pageNum)}
-                    className={cn(
-                      "w-6 h-6 flex items-center justify-center rounded-md",
-                      currentPage === pageNum
-                        ? "bg-epiclinx-teal text-[#2A2A2A]"
-                        : "text-xs"
-                    )}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-
-              {totalPages > 3 && (
-                <>
-                  <span className="text-white">...</span>
-
-                
-                  {totalPages > 4 && (
+                  return (
                     <button
-                      onClick={() => goToPage(totalPages - 1)}
+                      key={i}
+                      onClick={() => goToPage(pageNum)}
+                      className={cn(
+                        "w-6 h-6 flex items-center justify-center rounded-md",
+                        currentPage === pageNum
+                          ? "bg-epiclinx-teal text-[#2A2A2A]"
+                          : "text-xs"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                {totalPages > 3 && (
+                  <>
+                    <span className="text-white">...</span>
+
+                    {totalPages > 4 && (
+                      <button
+                        onClick={() => goToPage(totalPages - 1)}
+                        className="w-8 h-8 flex items-center justify-center rounded-sm bg-epiclinx-teal text-white"
+                      >
+                        {totalPages - 1}
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => goToPage(totalPages)}
                       className="w-8 h-8 flex items-center justify-center rounded-sm bg-epiclinx-teal text-white"
                     >
-                      {totalPages - 1}
+                      {totalPages}
                     </button>
-                  )}
+                  </>
+                )}
 
-               
-                  <button
-                    onClick={() => goToPage(totalPages)}
-                    className="w-8 h-8 flex items-center justify-center rounded-sm bg-epiclinx-teal text-white"
-                  >
-                    {totalPages}
-                  </button>
-                </>
-              )}
-
-              <button
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="flex items-center justify-center text-white font-light text-xs disabled:opacity-50 px-2"
-              >
-                Next
-                <ChevronRight size={16} className="ml-1" />
-              </button>
-            </div>) : null}
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center justify-center text-white font-light text-xs disabled:opacity-50 px-2"
+                >
+                  Next
+                  <ChevronRight size={16} className="ml-1" />
+                </button>
+              </div>
+            ) : null}
           </>
         ) : (
           <Messages />

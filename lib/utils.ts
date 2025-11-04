@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const followerRanges = {
+export const followerRanges:Record<string,string> = {
   nano: "Nano 1,000 - 10,000 followers",
   micro: "Micro 10,000 - 50,000 followers",
   mid: "Mid 50,000 - 500,000 followers",

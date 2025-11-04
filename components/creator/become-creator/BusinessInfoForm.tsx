@@ -15,7 +15,7 @@ import { countries } from "@/lib/countries";
 import { PhoneInput } from "@/components/ui/phone-input";
 import CropImageDialog from "@/components/ui/crop-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { apiUpload } from "@/lib/api";
+import { apiPost, apiUpload } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
 export const makeCreatorInfoSchema = (role: "creator" | "brand") => {
@@ -36,7 +36,9 @@ export const makeCreatorInfoSchema = (role: "creator" | "brand") => {
       lastName: z.string().min(1, "Last name is required"),
       location: z.string().min(1, "Location is required"),
       otherSocial: z.string().min(1, "Other Social is required"),
-      followers: z.coerce.number().min(1000,"Minimum follower count should be 1000")
+      followers: z.coerce
+        .number()
+        .min(1000, "Minimum follower count should be 1000"),
     });
   }
 
@@ -69,6 +71,10 @@ export default function BusinessInfoForm({
   onSave,
 }: CreatorInfoFormProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isEmailVerifying, setIsEmailVerifying] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
@@ -95,10 +101,11 @@ export default function BusinessInfoForm({
       businessDescription: formData?.businessDescription || "",
       companyName: formData?.companyName || "",
       shopAddress: formData?.shopAddress || "",
-      followers:formData?.followers || ""
+      followers: formData?.followers || "",
     });
     // explicitly reset selectedCategories too
     setSelectedCategories(formData.categories || []);
+    setEmailVerified(false);
   }, [formData]);
 
   const creatorInfoSchema = useMemo(
@@ -136,7 +143,7 @@ export default function BusinessInfoForm({
       businessDescription: formData?.businessDescription || "",
       companyName: formData?.companyName || "",
       shopAddress: formData?.shopAddress || "",
-      followers: formData?.followers || 0
+      followers: formData?.followers || 0,
     },
   });
 
@@ -151,7 +158,7 @@ export default function BusinessInfoForm({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      formSnapshotRef.current = getValues(); // Capture current form state
+      formSnapshotRef.current = getValues();
       setSelectedImage(file);
       setCropDialogOpen(true);
     }
@@ -207,6 +214,13 @@ export default function BusinessInfoForm({
   };
 
   const onSubmit = (data: CreatorInfoFormValues) => {
+    if (!emailVerified) {
+      toast({
+        variant: "destructive",
+        title: "Please verify your email before continuing.",
+      });
+      return;
+    }
     if (selectedCategories.length === 0) {
       setShowErrors(true);
       return;
@@ -216,12 +230,76 @@ export default function BusinessInfoForm({
     if (isEditing && onSave) {
       onSave(payload);
     } else {
-      onNext(payload); // pass data to the parent
+      onNext(payload); 
     }
   };
 
   const handleFormSubmit = handleSubmit(onSubmit);
 
+  const sendEmailOtp = async () => {
+    const email = getValues("email");
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      toast({
+        variant: "destructive",
+        title: "Please enter a valid email before sending OTP",
+      });
+      return;
+    }
+    setIsEmailVerifying(true);
+    try {
+      const res = await apiPost("/send-mail/send-otp", {
+        email: getValues("email"),
+      });
+      if (res.success) {
+        toast({
+          variant: "success",
+          title: "Otp sent successfully",
+        });
+        setOtpSent(true);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Unable to Send otp.",
+        });
+        setOtpSent(false);
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: error.message || "Unable to Send otp.",
+      });
+    } finally {
+      setIsEmailVerifying(false);
+    }
+  };
+  const verifyEmailOtp = async () => {
+    setIsEmailVerifying(true);
+    try {
+      const res = await apiPost("/send-mail/verify-otp", {
+        email: getValues("email"),
+        otp,
+      });
+      if (res.success) {
+        toast({
+          variant: "success",
+          title: "Email Verified successfully",
+        });
+        setEmailVerified(true);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Unable to Verify Email.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: error.message || "Unable to Verify Email.",
+      });
+    } finally {
+      setIsEmailVerifying(false);
+    }
+  };
   return (
     <div className="min-h-screen">
       <form onSubmit={handleFormSubmit} className="space-y-6">
@@ -433,7 +511,11 @@ export default function BusinessInfoForm({
                 id="email"
                 placeholder="Enter Email Address"
                 {...register("email")}
-                onChange={handleInputChange}
+                onChange={(e) => {
+                  handleInputChange();
+                  setEmailVerified(false);
+                  setOtpSent(false);
+                }}
                 className="border-gray-400 text-white bg-transparent rounded-full"
               />
               {(errors as any).email && (
@@ -442,6 +524,52 @@ export default function BusinessInfoForm({
                 </p>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="otp" className="text-gray-100 font-light text-xs">
+                Verify Email
+              </Label>
+              <br></br>
+              {emailVerified ? (
+                <p>Verified</p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="rounded-full px-1 disabled:cursor-not-allowed disabled:opacity-50 border-2 border-gray-300 bg-gray-600"
+                    disabled={isEmailVerifying || otpSent}
+                    onClick={sendEmailOtp}
+                  >
+                    {isEmailVerifying ? "Sending..." : "Send OTP"}
+                  </button>
+
+                  {otpSent && (
+                    <>
+                      <input
+                        name="otp"
+                        id="otp"
+                        type="text"
+                        maxLength={6}
+                        inputMode="numeric"
+                        pattern="\d{6}"
+                        placeholder="  Enter OTP"
+                        onChange={(e) => setOtp(e.target.value)}
+                        className="border px-3 ml-1 border-gray-400 text-gray-200 bg-transparent rounded-full"
+                      ></input>
+                      <button
+                        type="button"
+                        className="bg-gray-500 rounded-full p-1 ml-1 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={isEmailVerifying || otp.length !== 6}
+                        onClick={verifyEmailOtp}
+                      >
+                        {isEmailVerifying ? "Verifying..." : "Verify OTP"}
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+
             <div className="space-y-2">
               {formData?.role == "creator" && (
                 <Label
@@ -723,7 +851,7 @@ export default function BusinessInfoForm({
             <Button
               type="submit"
               className="rounded-full bg-epiclinx-teal hover:bg-epiclinx-teal/80 text-black px-6 py-3 transition-all w-full sm:w-auto sm:self-end"
-              disabled={isSubmitting || isUploading}
+              disabled={isSubmitting || isUploading || !emailVerified}
             >
               {isSubmitting || isUploading ? (
                 <span className="flex items-center gap-2">
@@ -751,8 +879,10 @@ export default function BusinessInfoForm({
                 </span>
               ) : isEditing ? (
                 "Save Changes"
-              ) : (
+              ) : emailVerified ? (
                 "Continue"
+              ) : (
+                "Verify Email to Continue"
               )}
             </Button>
           </div>

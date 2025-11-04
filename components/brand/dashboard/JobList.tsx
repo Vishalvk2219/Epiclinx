@@ -21,26 +21,29 @@ import { FaSackDollar } from "react-icons/fa6";
 import { apiFetch } from "@/lib/api";
 import { useAuthStore } from "@/stores/useAuthStore";
 
-interface Job {
+interface RequiredFieldJob {
   id: string;
-  logo: string;
+  logo?: string;
   title: string;
   brand: string;
   description: string;
   platforms: string[];
   requirements: string;
-  payment: string;
-  status: "Active" | "Pending Review" | "Closed" | "Drafts";
+  payment: number;
+  status: string;
   applicants: number;
   bids: number;
-  icon: string;
-  nano: boolean;
+  collaborationType: "Paid" | "Barter" | "Gifted" | "Other";
+  icon?: string;
+  contentType: string;
 }
+
+
 
 export function JobsList({ tab = "jobs" }: { tab: string }) {
   const [activeTab, setActiveTab] = useState<string>("All Jobs");
   const [currentPage, setCurrentPage] = useState(1);
-  const [jobs, setJobs] = useState([]);
+  const [jobs, setJobs] = useState<RequiredFieldJob[]>([]);
   const [activeSection, setActiveSection] = useState<"jobs" | "messages">(
     tab || "jobs"
   );
@@ -85,7 +88,7 @@ export function JobsList({ tab = "jobs" }: { tab: string }) {
       : jobs.filter((job) => job.status === activeTab);
 
   const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
-  const currentJobs = filteredJobs.slice(
+  const currentJobs:Job[] = filteredJobs.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );

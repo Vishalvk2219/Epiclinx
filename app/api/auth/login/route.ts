@@ -8,8 +8,14 @@ export async function POST(req: Request) {
     connectDB();
     const body = await req.json();
     const { username, password } = body;
-    const user = await User.findOne({email:username}).select("+password");
-
+    const normalizedEmail = username.toLowerCase()
+    const user = await User.findOne({email:normalizedEmail}).select("+password");
+    if(!user){
+      return NextResponse.json(
+        { success: false, error: "Invalid Credentials" },
+        { status: 401 }
+      );
+    }
     const validAuth = await user.comparePassword(password);
     if (!validAuth) {
       return NextResponse.json(

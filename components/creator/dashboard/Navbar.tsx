@@ -192,7 +192,7 @@ const Navbar = () => {
                     className="px-4 py-2 hover:bg-gray-700"
                     onClick={() => setProfileMenuOpen(false)}
                   >
-                    Profile
+                    Edit Profile
                   </Link>
                   <button
                     className="px-4 py-2 text-left hover:bg-gray-700"

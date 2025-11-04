@@ -4,7 +4,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 
 function handleApiError(endpoint: string, res: Response, body: any) {
-  const error: any = new Error(body?.message || res.statusText || "API error");
+  const error: any = new Error(body?.message  || body?.error|| res.statusText || "API error");
   error.statusCode = res.status;
   error.statusText = res.statusText;
   error.raw = body;
