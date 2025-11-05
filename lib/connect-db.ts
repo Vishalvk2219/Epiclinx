@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 let isConnected =false;
 
+import "../models/Job"
+import "../models/User"
+import "../models/Bids"
+import "../models/Otp"
+
 const connectDB = async() => {
     if (isConnected) return;
     try{

@@ -34,6 +34,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { jobId, proposal, offerAmount } = body;
+    console.log(body)
     const decodedJWT = await verifyToken();
     if (!decodedJWT) {
       return NextResponse.json(
@@ -41,12 +42,28 @@ export async function POST(req: Request) {
         { status: 401 }
       );
     }
-    const newBid = await BidModel.create({
+    const job = await JobModel.findById(jobId)
+    console.log(job)
+
+    let newBid;
+    if (job.offerType === "bid"){
+      newBid = await BidModel.create({
       jobId,
       amount: offerAmount,
       proposal,
       creatorId: decodedJWT.id,
+      offerType:job.offerType
     });
+    }
+    else{
+      newBid = await BidModel.create({
+      jobId,
+      proposal,
+      creatorId: decodedJWT.id,
+      offerType:job.offerType
+    });
+    }
+    
 
     await JobModel.findOneAndUpdate(
       { _id: jobId },

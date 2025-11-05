@@ -16,6 +16,7 @@ import { PlatformIcons } from "@/components/ui/platformIcons";
 import Link from "next/link";
 import BidFilter, { BidFilterValues } from "./BidFilter";
 import { cn } from "@/lib/utils";
+import { EmptyState, LoadingState } from "@/components/loadingAndEmpty";
 
 export function BidssList() {
   const [bids, setBids] = useState<any[]>([]);
@@ -136,7 +137,7 @@ export function BidssList() {
       if (response.success) {
         const formattedBids = response.allApplications.map((bid: any) => ({
           bidId: bid._id,
-          bidAmount: bid.amount,
+          bidAmount: bid.offerType==="bid" ? bid.amount : bid.jobId.budget,
           bidStatus: bid.status,
           bidCreatedAt: bid.createdAt,
           campaignId: bid.jobId?._id?.toString() || "",
@@ -150,6 +151,7 @@ export function BidssList() {
           deliverables: bid.jobId?.deliverables || [],
           deadline: bid.jobId?.deadline || null,
           description: bid.jobId?.description || "",
+          offerType:bid.offerType
         }));
         setBids(formattedBids);
       }
@@ -182,20 +184,10 @@ export function BidssList() {
       </div>
 
       <div className="space-y-3 mt-6">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-10 text-gray-300">
-            <div className="relative">
-              <div className="h-10 w-10 border-4 border-gray-600 border-t-epiclinx-teal rounded-full animate-spin" />
-            </div>
-            <p className="mt-3 text-sm text-gray-400">Loading your bids...</p>
-          </div>
-        ) : (
+        {loading ? <LoadingState message="Loading your Bids"/>: (
           <>
             {currentBids.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                <FileSearch className="h-12 w-12 mb-3 text-gray-500" />
-                <p className="text-lg">No bids found</p>
-              </div>
+              <EmptyState message="No bids found"/>
             ) : (
               <>
                 {currentBids.map((bid) => (
@@ -250,7 +242,7 @@ export function BidssList() {
                     {/* Bid Info */}
                     <div className="flex flex-col items-end md:items-center gap-1 md:w-[150px]">
                       <span className="text-epiclinx-teal font-medium text-lg">
-                        ${bid.bidAmount || 0}
+                        {bid.offerType === "bid" ? bid.bidAmount : (bid.bidAmount+"(Fixed)")}
                       </span>
                       <span className="text-gray-400 text-xs flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
@@ -272,7 +264,7 @@ export function BidssList() {
                           ? "Rejected"
                           : "Pending"}
                       </span>
-                    </div>
+                    </div> : 
                   </div>
                 ))}
               </>

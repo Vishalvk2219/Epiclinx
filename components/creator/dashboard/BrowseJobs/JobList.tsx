@@ -11,6 +11,7 @@ import {
   Gavel,
   Locate,
   Search,
+  Star,
   Users,
 } from "lucide-react";
 import { capitalize, cn, followerRanges } from "@/lib/utils";
@@ -47,6 +48,7 @@ interface Job {
   deliverables?: string[];
   location?: string;
   applied?: boolean;
+  offerType:"bids"|"fixed"
 }
 
 export function JobsList({ jobStatuses }) {
@@ -91,8 +93,10 @@ export function JobsList({ jobStatuses }) {
         location: capitalize(jobs.location || ""),
         deliverables: jobs.selectedContentTypes || [],
         deadline: jobs.postDeadline,
+        offerType:jobs.offerType,
       }));
       setJobs(requiredFieldJobs);
+      console.log(jobs)
     } catch (error: any) {
       console.log("Unable to load campaign or jobs");
     } finally {
@@ -336,6 +340,10 @@ const EmptyState = ({ message = "No data found" }: { message?: string }) => (
                       <DollarSign className="w-4 h-4" />
                       {job.collaborationType}
                     </div>
+                    <div className="flex items-center gap-1 text-white text-sm font-light">
+                      <Star className="w-4 h-4" />
+                      {job.offerType}
+                    </div>
 
                     {/* Row 8: Bids/Applicants */}
                     <div className="text-white text-sm flex items-center gap-2">
@@ -446,6 +454,10 @@ const EmptyState = ({ message = "No data found" }: { message?: string }) => (
                         <div className="flex items-center gap-1 text-white text-sm font-light">
                           <DollarSign className="w-5 h-5" />
                           {job.collaborationType}
+                        </div>
+                        <div className="flex items-center gap-1 text-white text-sm font-light">
+                          <Star className="w-5 h-5" />
+                          {job.offerType}
                         </div>
 
                         <div className="ml-auto text-white text-xs font-light flex items-center gap-2">

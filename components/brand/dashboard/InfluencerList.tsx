@@ -415,10 +415,10 @@ export default function InfluencerList({ jobId }) {
                   className="hidden md:block h-6"
                 />
 
-                <div className="flex flex-col md:items-center max-md:items-start justify-center gap-1">
+                {influencer.bid && <div className="flex flex-col md:items-center max-md:items-start justify-center gap-1">
                   <div className="font-bold">${influencer.bid}</div>
                   <span className="text-xs text-gray-400">Bid</span>
-                </div>
+                </div>}
               </div>
             </div>
 
@@ -446,7 +446,7 @@ export default function InfluencerList({ jobId }) {
                     Message
                   </Button>
                 </Link>
-                {influencer.bidStatus === "pending" ? (
+                {influencer.bidStatus === "Pending" ? (
                   <>
                     <Button
                       size="sm"

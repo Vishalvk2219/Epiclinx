@@ -1,3 +1,4 @@
+import { OfferType } from './../lib/types';
 import { Schema, model, models, Types, Document } from "mongoose";
 
 export interface IBid extends Document {
@@ -6,20 +7,21 @@ export interface IBid extends Document {
   amount: number;
   proposal: string;
   status: "Pending" | "Accepted" | "Rejected";
-  createdAt: Date;
+  offerType:"bid" | "fixed"
 }
 
 const BidSchema = new Schema<IBid>(
   {
     jobId: { type: Schema.Types.ObjectId, ref: "Job", required: true },
     creatorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    amount: { type: Number, required: true },
+    amount: { type: Number},
     proposal: { type: String, required: false },
     status: {
       type: String,
       enum: ["Pending", "Accepted", "Rejected"],
       default: "Pending",
     },
+    offerType:{type:String}
   },
   { timestamps: true }
 );

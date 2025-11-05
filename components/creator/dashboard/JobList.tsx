@@ -20,6 +20,7 @@ import { ActionMenu } from "@/components/ActionDropdown";
 import { FaSackDollar } from "react-icons/fa6";
 import { apiFetch } from "@/lib/api";
 import { PlatformIcons } from "@/components/ui/platformIcons";
+import { EmptyState, LoadingState } from "@/components/loadingAndEmpty";
 
 interface Job {
   id: string;
@@ -58,6 +59,7 @@ export function JobsList({
     "jobs"
   );
   const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(false);
   const itemsPerPage = 5;
 
   const tabs = publicProfile
@@ -72,6 +74,7 @@ export function JobsList({
       ];
 
   const allJobs = async () => {
+    setLoading(true);
     try {
       const fetchAllJobs = await apiFetch("/bids/fetch-all-bids");
       console.log(fetchAllJobs);
@@ -99,6 +102,8 @@ export function JobsList({
       console.log(requiredFieldJobs);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -185,210 +190,223 @@ export function JobsList({
             )}
 
             <div className="space-y-4">
-              {currentJobs.map((job) => (
-                <div
-                  key={job.id}
-                  className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 relative"
-                >
-                  {/* Mobile layout */}
-                  <div className="md:hidden flex flex-col space-y-4">
-                    {/* Row 1: Image, Status, Price, Menu */}
-                    <div className="flex items-center justify-between">
-                      <div className="relative">
-                        <div className="w-12 h-12 rounded-full bg-white flex-shrink-0 flex items-center justify-center overflow-hidden">
-                          <Image
-                            src={job.logo || "/placeholder.svg"}
-                            alt="brand logo"
-                            width={48}
-                            height={48}
-                            className="rounded-full"
-                          />
-                        </div>
-                        {job.icon === "gavel" ? (
-                          <span className="absolute left-8 -bottom-4 bg-white rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
-                            <Gavel
-                              size={20}
-                              className="text-black/80 max-md:w-3 max-md:h-3"
-                            />
-                          </span>
-                        ) : (
-                          <span className="absolute left-8 -bottom-4 bg-black/90 rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
-                            <FaSackDollar
-                              size={14}
-                              className="text-white max-md:w-3 max-md:h-3"
-                            />
-                          </span>
-                        )}
-                      </div>
+              {loading ? (
+                <LoadingState message="Loading Jobs..."/>
+              ) : (
+                <>
+                  {currentJobs.length === 0 ? (
+                    <EmptyState message="No Jobs Completed"/>
+                  ) : (
+                    currentJobs.map((job) => (
+                      <div
+                        key={job.id}
+                        className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 relative"
+                      >
+                        {/* Mobile layout */}
+                        <div className="md:hidden flex flex-col space-y-4">
+                          {/* Row 1: Image, Status, Price, Menu */}
+                          <div className="flex items-center justify-between">
+                            <div className="relative">
+                              <div className="w-12 h-12 rounded-full bg-white flex-shrink-0 flex items-center justify-center overflow-hidden">
+                                <Image
+                                  src={job.logo || "/placeholder.svg"}
+                                  alt="brand logo"
+                                  width={48}
+                                  height={48}
+                                  className="rounded-full"
+                                />
+                              </div>
+                              {job.icon === "gavel" ? (
+                                <span className="absolute left-8 -bottom-4 bg-white rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
+                                  <Gavel
+                                    size={20}
+                                    className="text-black/80 max-md:w-3 max-md:h-3"
+                                  />
+                                </span>
+                              ) : (
+                                <span className="absolute left-8 -bottom-4 bg-black/90 rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
+                                  <FaSackDollar
+                                    size={14}
+                                    className="text-white max-md:w-3 max-md:h-3"
+                                  />
+                                </span>
+                              )}
+                            </div>
 
-                      <div className="flex items-center gap-2">
-                        {job.status === "Pending" ? (
-                          <span className="bg-gray-400/20 border border-white text-white text-xs px-2 py-1 rounded-md md:rounded-full">
-                            Pending
-                          </span>
-                        ) : job.status === "Accepted Jobs" ? (
-                          <span className="bg-[#FFC5C5] border border-[#FFC5C5] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
-                            Accepted
-                          </span>
-                        ) : (
-                          <span className="bg-[#8BC34A] border border-[#8BC34A] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
-                            Completed
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                            <div className="flex items-center gap-2">
+                              {job.status === "Pending" ? (
+                                <span className="bg-gray-400/20 border border-white text-white text-xs px-2 py-1 rounded-md md:rounded-full">
+                                  Pending
+                                </span>
+                              ) : job.status === "Accepted Jobs" ? (
+                                <span className="bg-[#FFC5C5] border border-[#FFC5C5] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
+                                  Accepted
+                                </span>
+                              ) : (
+                                <span className="bg-[#8BC34A] border border-[#8BC34A] text-white text-xs px-2 py-1 rounded-md md:rounded-full">
+                                  Completed
+                                </span>
+                              )}
+                            </div>
+                          </div>
 
-                    {/* Row 2: Title */}
-                    <Link href={`/dashboard/creator/apply-for-job`}>
-                      <h3 className="text-white font-medium">{job.title}</h3>
-                    </Link>
-
-                    {/* Row 3: Platform logos */}
-                    <PlatformIcons platforms={job.platforms} />
-
-                    {/* Row 4: Description */}
-                    <p className="text-white text-sm font-light">
-                      {job.description}
-                    </p>
-
-                    {/* Row 5: Nano */}
-                    <div className="flex items-center gap-2 text-white text-sm font-light">
-                      <Users className="w-4 h-4" />
-                      {job.requirements}
-                    </div>
-
-                    {/* Row 6: UGC */}
-                    <div className="flex items-center gap-1 text-white text-xs font-light">
-                      <Briefcase className="w-4 h-4" />
-                      UGC
-                    </div>
-
-                    {/* Row 7: Paid */}
-                    <div className="flex items-center gap-1 text-white text-sm font-light">
-                      <DollarSign className="w-4 h-4" />
-                      Paid
-                    </div>
-
-                    {/* Row 8: Bids/Applicants */}
-                    <div className="text-white text-sm">
-                      {job.applicants > 0
-                        ? `${job.applicants} Applicants`
-                        : `${job.bids} Bids`}
-                    </div>
-                  </div>
-
-                  {/* Desktop layout */}
-                  <div className="hidden md:flex items-start gap-4">
-                    <div className="relative">
-                      <div className=" w-[100px] h-[100px] rounded-full bg-white flex-shrink-0 flex items-center justify-center overflow-hidden">
-                        <Image
-                          src={job.logo || "/placeholder.svg"}
-                          alt="brand logo"
-                          width={100}
-                          height={100}
-                          className="rounded-full"
-                        />
-                      </div>
-                      {job.icon === "gavel" ? (
-                        <span className="absolute left-8 -bottom-4 bg-white rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
-                          <Gavel
-                            size={20}
-                            className="text-black/80 max-md:w-3 max-md:h-3"
-                          />
-                        </span>
-                      ) : (
-                        <span className="absolute left-8 -bottom-4 bg-black/90 rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
-                          <FaSackDollar
-                            size={14}
-                            className="text-white max-md:w-3 max-md:h-3"
-                          />
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex max-md:flex-col gap-2">
+                          {/* Row 2: Title */}
                           <Link href={`/dashboard/creator/apply-for-job`}>
                             <h3 className="text-white font-medium">
                               {job.title}
                             </h3>
                           </Link>
+
+                          {/* Row 3: Platform logos */}
                           <PlatformIcons platforms={job.platforms} />
+
+                          {/* Row 4: Description */}
+                          <p className="text-white text-sm font-light">
+                            {job.description}
+                          </p>
+
+                          {/* Row 5: Nano */}
+                          <div className="flex items-center gap-2 text-white text-sm font-light">
+                            <Users className="w-4 h-4" />
+                            {job.requirements}
+                          </div>
+
+                          {/* Row 6: UGC */}
+                          <div className="flex items-center gap-1 text-white text-xs font-light">
+                            <Briefcase className="w-4 h-4" />
+                            UGC
+                          </div>
+
+                          {/* Row 7: Paid */}
+                          <div className="flex items-center gap-1 text-white text-sm font-light">
+                            <DollarSign className="w-4 h-4" />
+                            Paid
+                          </div>
+
+                          {/* Row 8: Bids/Applicants */}
+                          <div className="text-white text-sm">
+                            {job.applicants > 0
+                              ? `${job.applicants} Applicants`
+                              : `${job.bids} Bids`}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            {(() => {
-                              const statusStyles: Record<string, string> = {
-                                Pending:
-                                  "bg-gray-400/20 border border-gray-400 text-gray-200",
-                                "Accepted Jobs":
-                                  "bg-blue-500/20 border border-blue-400 text-blue-200",
-                                "Jobs In Progress":
-                                  "bg-yellow-500/20 border border-yellow-400 text-yellow-200",
-                                "Submitted Jobs":
-                                  "bg-purple-500/20 border border-purple-400 text-purple-200",
-                                "Completed Jobs":
-                                  "bg-green-500/20 border border-green-400 text-green-200",
-                                "Declined Jobs":
-                                  "bg-red-500/20 border border-red-400 text-red-200",
-                              };
 
-                              const style =
-                                statusStyles[job.status] ||
-                                "bg-gray-500/20 border border-gray-400 text-gray-200";
+                        {/* Desktop layout */}
+                        <div className="hidden md:flex items-start gap-4">
+                          <div className="relative">
+                            <div className=" w-[100px] h-[100px] rounded-full bg-white flex-shrink-0 flex items-center justify-center overflow-hidden">
+                              <Image
+                                src={job.logo || "/placeholder.svg"}
+                                alt="brand logo"
+                                width={100}
+                                height={100}
+                                className="rounded-full"
+                              />
+                            </div>
+                            {job.icon === "gavel" ? (
+                              <span className="absolute left-8 -bottom-4 bg-white rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
+                                <Gavel
+                                  size={20}
+                                  className="text-black/80 max-md:w-3 max-md:h-3"
+                                />
+                              </span>
+                            ) : (
+                              <span className="absolute left-8 -bottom-4 bg-black/90 rounded-full flex items-center justify-center w-8 h-8 border border-[#3A3A3A] text-white text-sm pointer-events-none max-md:left-auto max-md:top-0 max-md:-right-4 max-md:bottom-auto max-md:w-6 max-md:h-6">
+                                <FaSackDollar
+                                  size={14}
+                                  className="text-white max-md:w-3 max-md:h-3"
+                                />
+                              </span>
+                            )}
+                          </div>
 
-                              return (
-                                <span
-                                  className={`${style} text-xs px-2 py-1 rounded-md md:rounded-full`}
-                                >
-                                  {job.status}
-                                </span>
-                              );
-                            })()}
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex max-md:flex-col gap-2">
+                                <Link href={`/dashboard/creator/apply-for-job`}>
+                                  <h3 className="text-white font-medium">
+                                    {job.title}
+                                  </h3>
+                                </Link>
+                                <PlatformIcons platforms={job.platforms} />
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                  {(() => {
+                                    const statusStyles: Record<string, string> =
+                                      {
+                                        Pending:
+                                          "bg-gray-400/20 border border-gray-400 text-gray-200",
+                                        "Accepted Jobs":
+                                          "bg-blue-500/20 border border-blue-400 text-blue-200",
+                                        "Jobs In Progress":
+                                          "bg-yellow-500/20 border border-yellow-400 text-yellow-200",
+                                        "Submitted Jobs":
+                                          "bg-purple-500/20 border border-purple-400 text-purple-200",
+                                        "Completed Jobs":
+                                          "bg-green-500/20 border border-green-400 text-green-200",
+                                        "Declined Jobs":
+                                          "bg-red-500/20 border border-red-400 text-red-200",
+                                      };
+
+                                    const style =
+                                      statusStyles[job.status] ||
+                                      "bg-gray-500/20 border border-gray-400 text-gray-200";
+
+                                    return (
+                                      <span
+                                        className={`${style} text-xs px-2 py-1 rounded-md md:rounded-full`}
+                                      >
+                                        {job.status}
+                                      </span>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+                            </div>
+
+                            <p className="text-white text-sm mb-4 font-light">
+                              {job.description}
+                            </p>
+
+                            <div className="flex flex-wrap items-center gap-4">
+                              <div className="flex items-center gap-2 text-white text-sm font-light">
+                                <Users className="w-5 h-5" />
+                                {job.requirements}
+                              </div>
+
+                              <div className="flex items-center gap-1 text-white text-xs font-light">
+                                <Briefcase className="w-5 h-5" />
+                                UGC
+                              </div>
+
+                              <div className="flex items-center gap-1 text-white text-sm font-light">
+                                <DollarSign className="w-5 h-5" />
+                                Paid
+                              </div>
+
+                              <div className="ml-auto text-white text-xs font-light">
+                                {job.status === "Pending" ? (
+                                  <button className="border border-red-500 bg-transparent rounded-full px-4 py-1 text-sm font-light text-red-500">
+                                    Cancel Application
+                                  </button>
+                                ) : job.status === "Accepted Jobs" ? (
+                                  <Link
+                                    href={`/creator/jobs/${job.id}/offer-portal`}
+                                    className="bg-epiclinx-teal rounded-full px-4 py-2 text-sm text-black text-xs hover:bg-epiclinx-teal/90"
+                                  >
+                                    Enter Offer Portal
+                                  </Link>
+                                ) : null}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
-
-                      <p className="text-white text-sm mb-4 font-light">
-                        {job.description}
-                      </p>
-
-                      <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-2 text-white text-sm font-light">
-                          <Users className="w-5 h-5" />
-                          {job.requirements}
-                        </div>
-
-                        <div className="flex items-center gap-1 text-white text-xs font-light">
-                          <Briefcase className="w-5 h-5" />
-                          UGC
-                        </div>
-
-                        <div className="flex items-center gap-1 text-white text-sm font-light">
-                          <DollarSign className="w-5 h-5" />
-                          Paid
-                        </div>
-
-                        <div className="ml-auto text-white text-xs font-light">
-                          {job.status === "Pending" ? (
-                            <button className="border border-red-500 bg-transparent rounded-full px-4 py-1 text-sm font-light text-red-500">
-                              Cancel Application
-                            </button>
-                          ) : job.status === "Accepted Jobs" ? (
-                            <Link
-                              href={`/creator/jobs/${job.id}/offer-portal`}
-                              className="bg-epiclinx-teal rounded-full px-4 py-2 text-sm text-black text-xs hover:bg-epiclinx-teal/90"
-                            >
-                              Enter Offer Portal
-                            </Link>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                    ))
+                  )}
+                </>
+              )}
             </div>
 
             {totalPages > 1 ? (

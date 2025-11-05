@@ -8,7 +8,7 @@ const Page = () => {
         <div className="min-h-screen text-white mx-3 py-4">
             <JobPostingForm />
             <Newsletter />
-            <Footer />
+            {/* <Footer /> */}
         </div>
     )
 }

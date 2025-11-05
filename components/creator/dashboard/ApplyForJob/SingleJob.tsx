@@ -24,6 +24,7 @@ export function SingleJob() {
   const [showMore, setShowMore] = useState(false);
   const [bid, setBid] = useState({ offerAmount: "", proposal: "" });
   const toggleShowMore = () => setShowMore((prev) => !prev);
+  const [viewAmount,setViewAmount] = useState(false)
 
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
@@ -94,17 +95,17 @@ export function SingleJob() {
       {/* Job Card */}
       <div className="bg-epiclinx-semiteal !text-black rounded-3xl overflow-hidden shadow-lg">
         {/* Job Header */}
-        <CampaignCard campaignId={id} />
+        <CampaignCard campaignId={id} setViewAmount={setViewAmount}/>
       </div>
 
       {!loading && bidNotSubmitted ? (
         <div className="bg-white shadow-lg rounded-2xl p-4 w-full mx-auto flex flex-col gap-4">
-          <h2 className="text-2xl font-semibold text-white text-center bg-gray-700 mx-auto p-2 rounded-sm">
-            Submit Your Bid
+          <h2 className="text-xl  border-4 border-epiclinx-teal bg-epiclinx-primary font-bold text-white text-center  mx-auto w-full py-2 px-4  rounded-md">
+            {viewAmount ? "Submit Your Bid" : "Submit your proposal"}
           </h2>
 
           {/* Offer Amount */}
-          <div className="flex flex-col">
+          {viewAmount && <div className="flex flex-col">
             <label
               htmlFor="offerAmount"
               className="text-sm font-medium text-gray-600 mb-1"
@@ -121,7 +122,7 @@ export function SingleJob() {
               required={true}
               className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition shadow-sm text-gray-800"
             />
-          </div>
+          </div>}
 
           {/* Proposal */}
           <div className="flex flex-col">
@@ -146,7 +147,7 @@ export function SingleJob() {
           {/* Submit Button */}
           <button
             onClick={handleApplyJob}
-            className="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 rounded-xl shadow-md transition-all duration-200 ease-in-out hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-1"
+            className="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 rounded-xl shadow-md transition-all duration-200 ease-in-out hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-1 w-fit px-4 py-2 mx-auto"
           >
             Apply for Job
           </button>
@@ -175,12 +176,12 @@ export function SingleJob() {
 
           {/* Bid Details */}
           <div className="flex flex-col gap-2">
-            <p>
+            {bid.offerAmount && (<p>
               <span className="font-semibold text-gray-700">Amount:</span>{" "}
               <span className="text-gray-900 text-lg font-bold">
                 ${bid.offerAmount}
               </span>
-            </p>
+            </p>)}
             <p>
               <span className="font-semibold text-gray-700">Proposal:</span>{" "}
               <span className="text-gray-900">{bid.proposal}</span>

@@ -73,7 +73,25 @@ const step1Schema = z.object({
     .refine((val) => val === undefined || val.length > 0, {
       message: "Location cannot be empty if provided",
     }),
-});
+    offerType: z.enum(["fixed", "bid"]),
+    multipleCreators: z.boolean(),
+}).superRefine((data, ctx) => {
+    const budgetValue = parseFloat(data.budget);
+    if (data.offerType === "bid" && budgetValue < 1000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["budget"],
+        message: "Minimum budget for bids is $1000",
+      });
+    }
+    if (data.offerType === "fixed" && budgetValue < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["budget"],
+        message: "Minimum budget for fixed offers is $1",
+      });
+    }
+  });;
 
 // Step 2 Schema: Campaign goal, requirements, content types + niche and hashtags (optional)
 const step2Schema = z.object({
@@ -93,10 +111,8 @@ const step3Schema = z.object({
     .min(1, "Total payment is required")
     .regex(/^[0-9]+(\.[0-9]{1,2})?$/, "Please enter a valid amount"),
   collaborationType: z.string().min(1, "Collaboration type is required"),
-  multipleCreators: z.boolean(),
   contentApproval: z.boolean(),
   allowShowcase: z.boolean(),
-  offerType: z.enum(["fixed", "variable"]),
 });
 
 // Step 4 Schema: Final fields - tags, authenticity, exclusions
@@ -310,8 +326,10 @@ export function PublicJobForm({
           followerSize: formData.followerSize,
           campaignImageUrl: formData.campaignImageUrl,
           campaignDuration: formData.campaignDuration,
+          multipleCreators: formData.multipleCreators,
           postDeadline: formData.postDeadline,
           location: formData.location,
+          offerType:offerType
         });
       }
       // Step 2
@@ -329,10 +347,8 @@ export function PublicJobForm({
         step3Schema.parse({
           totalPayment: formData.totalPayment,
           collaborationType: formData.collaborationType,
-          multipleCreators: formData.multipleCreators,
           contentApproval: formData.contentApproval,
           allowShowcase: formData.allowShowcase,
-          offerType: offerType,
         });
       }
       // Step 4

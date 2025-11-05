@@ -21,8 +21,11 @@ import { PlatformIcons } from "@/components/ui/platformIcons";
 
 export default function CampaignCard({
   campaignId,
+  setViewAmount
 }: {
   campaignId: string | null;
+  setViewAmount:React.Dispatch<React.SetStateAction<boolean>>
+
 }) {
   const [campaign, setCampaign] = useState<any | null>(null);
   const [showMore, setShowMore] = useState(false);
@@ -44,6 +47,9 @@ export default function CampaignCard({
   }, [campaignId]);
 
   if (!campaign) return null;
+  if (campaign.offerType === "bid"){
+    setViewAmount(true)
+  }
 
   return (
     <div className="rounded-3xl p-6 mb-0 bg-epiclinx-primary shadow-sm border border-gray-100">

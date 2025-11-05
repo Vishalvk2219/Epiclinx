@@ -80,9 +80,9 @@ const ProfileView = () => {
                 <Globe size={14} /> {user.businessWebsite}
               </a>
             )}
-            {user?.followers && (
+            {user?.followers.length > 1 && (
               <span className="flex items-center gap-1">
-                👥 {user.followers} Followers
+                {user.followers} Followers
               </span>
             )}
           </div>

@@ -162,16 +162,14 @@ export function OffersList({ jobId }) {
                   <span className="text-xs text-gray-400">Location</span>
                 </div>
 
-                <Separator
+                {influencer.bid && <><Separator
                   orientation="vertical"
                   className="hidden md:block h-6"
                 />
-
-                {/* Bid */}
-                <div className="flex flex-col md:items-center max-md:items-start justify-center gap-1">
+                 <div className="flex flex-col md:items-center max-md:items-start justify-center gap-1">
                   <div className="font-bold">${influencer.bid}</div>
                   <span className="text-xs text-gray-400">Bid</span>
-                </div>
+                </div></>}
               </div>
             </div>
             

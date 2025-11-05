@@ -22,32 +22,32 @@ const Navbar = () => {
   const pathname = usePathname();
 
   const toggleMenu = () => {
-    setSignInOpen(false); // Close sign in form if open
-    setSignUpOpen(false); // Close Signup form if open
-    setForgotPasswordOpenOpen(false); // Close Forgot Password form if open
+    setSignInOpen(false); 
+    setSignUpOpen(false);
+    setForgotPasswordOpenOpen(false);
     setMenuOpen((prev) => !prev);
   };
 
   const closeMenu = () => setMenuOpen(false);
 
   const openSignIn = () => {
-    setMenuOpen(false); // Close menu if open
-    setSignUpOpen(false); // Close sign up form if open
+    setMenuOpen(false); 
+    setSignUpOpen(false); 
     setForgotPasswordOpenOpen(false);
     setSignInOpen(true);
   };
 
   const openSignUp = () => {
-    setMenuOpen(false); // Close menu if open
-    setSignInOpen(false); // Close sign in form if open
+    setMenuOpen(false); 
+    setSignInOpen(false); 
     setForgotPasswordOpenOpen(false);
     setSignUpOpen(true);
   };
 
   const openForgotPassword = () => {
-    setMenuOpen(false); // Close menu if open
-    setSignUpOpen(false); // Close sign up form if open
-    setSignInOpen(false); // Close sign in form if open
+    setMenuOpen(false);
+    setSignUpOpen(false);
+    setSignInOpen(false);
     setForgotPasswordOpenOpen(true);
   };
 
@@ -159,6 +159,9 @@ const Navbar = () => {
           <div className="flex items-center gap-10">
             {user ? (
               <div className="hidden md:flex items-center gap-3 sm:hidden">
+                <Link href={`/dashboard/${user.role || "creator"}`} className="text-gray-200 hover:text-[#00e0ca] transition-colors duration-200 mx-1">Go to Dashboard
+                </Link>
+
                 <Image
                   src={
                     user.profileImageUrl ||

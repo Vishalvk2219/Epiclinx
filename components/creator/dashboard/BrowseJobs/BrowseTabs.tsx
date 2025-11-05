@@ -10,6 +10,7 @@ import {
   Ellipsis,
   FileSearch,
   Gavel,
+  Star,
   Users,
 } from "lucide-react";
 import { capitalize, cn, followerRanges } from "@/lib/utils";
@@ -79,6 +80,7 @@ export function BrowseTabs({ show = true }: { show?: boolean }) {
           deliverables: applications.jobId.selectedContentTypes || [],
           deadline: applications.jobId.postDeadline,
           bidAmount: applications.amount,
+          offerType:applications.jobId.offerType
         })
       );
       const jobStatuses = requiredFieldJobs.map((job) => ({
@@ -311,6 +313,10 @@ export function BrowseTabs({ show = true }: { show?: boolean }) {
                           <DollarSign className="w-4 h-4" />
                           {job.collaborationType}
                         </div>
+                        <div className="flex items-center gap-1 text-white text-sm font-light">
+                          <Star className="w-4 h-4" />
+                          {job.offerType}
+                        </div>
 
                         {/* Row 8: Bids/Applicants */}
                         <div className="text-white text-sm">
@@ -433,6 +439,11 @@ export function BrowseTabs({ show = true }: { show?: boolean }) {
                               <DollarSign className="w-5 h-5" />
                               {job.collaborationType}
                             </div>
+                            <div className="flex items-center gap-1 text-white text-sm font-light">
+                              <Star className="w-5 h-5" />
+                              {job.offerType}
+                            </div>
+
 
                             <div className="ml-auto text-white text-xs font-light">
                               {job.status === "Pending" ? (
