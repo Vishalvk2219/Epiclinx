@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { apiFetch, apiPost } from "@/lib/api";
 import { IUser } from "@/models/User";
-import { LoadingState } from "./loadingAndEmpty";
+import { LoadingState } from "./LoadingAndNotFound";
 
 type Creator = {
   id: number;

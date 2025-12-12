@@ -7,12 +7,14 @@ import ConditionalNavbar from "@/components/NavbarCondition";
 import { ToastRenderer } from "@/components/ui/toast-renderer";
 import { apiFetchServer } from "@/lib/api-server";
 import { ClientAuthHydrator } from "@/components/ClientAuthHydrator";
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Epiclinx - Connect Brands with Creators",
-  description: "Epiclinx is a platform that connects brands with creators for authentic collaborations.",
+  description:
+    "Epiclinx is a platform that connects brands with creators for authentic collaborations.",
   generator: "v0.dev",
 };
 
@@ -30,10 +32,12 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ClientAuthHydrator user={user} />
-        <ConditionalNavbar />
-        {children}
-        <ToastRenderer />
+        <ReactQueryProvider>
+          <ClientAuthHydrator user={user} />
+          <ConditionalNavbar />
+          {children}
+          <ToastRenderer />
+        </ReactQueryProvider>
       </body>
     </html>
   );

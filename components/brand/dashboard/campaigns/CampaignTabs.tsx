@@ -22,7 +22,7 @@ import { Messages } from "../Messages";
 import CampaignList from "./CampaignList";
 import { apiFetch } from "@/lib/api";
 import { PlatformIcons } from "@/components/ui/platformIcons";
-import { LoadingState } from "@/components/loadingAndEmpty";
+import { LoadingState } from "@/components/LoadingAndNotFound";
 import { IJob } from "@/models/Job";
 
 interface Job {

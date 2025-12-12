@@ -20,7 +20,7 @@ import { ActionMenu } from "@/components/ActionDropdown";
 import { FaSackDollar } from "react-icons/fa6";
 import { apiFetch } from "@/lib/api";
 import { PlatformIcons } from "@/components/ui/platformIcons";
-import { EmptyState, LoadingState } from "@/components/loadingAndEmpty";
+import { EmptyState, LoadingState } from "@/components/LoadingAndNotFound";
 
 interface Job {
   id: string;

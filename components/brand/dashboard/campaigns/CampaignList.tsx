@@ -21,7 +21,7 @@ import { FaSackDollar } from "react-icons/fa6";
 import FilterSidebar from "@/components/filtersidebar";
 import { apiFetch } from "@/lib/api";
 import { PlatformIcons } from "@/components/ui/platformIcons";
-import { LoadingState } from "@/components/loadingAndEmpty";
+import { LoadingState } from "@/components/LoadingAndNotFound";
 
 interface Job {
   id: string;

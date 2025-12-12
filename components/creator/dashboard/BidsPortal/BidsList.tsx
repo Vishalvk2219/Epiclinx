@@ -16,7 +16,7 @@ import { PlatformIcons } from "@/components/ui/platformIcons";
 import Link from "next/link";
 import BidFilter, { BidFilterValues } from "./BidFilter";
 import { cn } from "@/lib/utils";
-import { EmptyState, LoadingState } from "@/components/loadingAndEmpty";
+import { EmptyState, LoadingState } from "@/components/LoadingAndNotFound";
 
 export function BidssList() {
   const [bids, setBids] = useState<any[]>([]);

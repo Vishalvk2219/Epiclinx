@@ -1,5 +1,8 @@
 // utils.tsx
 import { FileSearch } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { UserX } from "lucide-react";
+
 
 export const LoadingState = ({
   message = "Loading...",
@@ -14,6 +17,7 @@ export const LoadingState = ({
   </div>
 );
 
+
 export const EmptyState = ({
   message = "No data found",
 }: {
@@ -24,3 +28,15 @@ export const EmptyState = ({
     <p className="text-lg">{message}</p>
   </div>
 );
+
+
+export function NoUserFound() {
+  return (
+    <Card className="w-fit mx-auto mt-10 text-center shadow-sm bg-gray-400 rounded-lg">
+      <CardContent className="flex flex-col items-center p-6">
+        <UserX size={48} className="text-gray-100 mb-3" />
+        <h2 className="text-lg font-semibold text-gray-100">No User Found</h2>
+      </CardContent>
+    </Card>
+  );
+}

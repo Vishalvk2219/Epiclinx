@@ -19,6 +19,7 @@ import { FaFacebook, FaYoutube } from "react-icons/fa";
 import { PiInstagramLogoFill, PiTiktokLogoFill } from "react-icons/pi";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { apiFetch } from "@/lib/api";
+import { LoadingState, NoUserFound } from "@/components/LoadingAndNotFound";
 
 const ProfileView = ({ value = true }: { value: boolean }) => {
   const router = useRouter();
@@ -59,8 +60,8 @@ const ProfileView = ({ value = true }: { value: boolean }) => {
   // }
 
   const closeSignIn = () => setSignInOpen(false);
-  if (loading) return <p>Loading...</p>;
-  if (!user) return <p>Failed to fetch data</p>;
+  if (loading) return <LoadingState message="Loading User Profile..."/>;
+  if (!user) return <NoUserFound/>
   return (
     <div>
       <div className="relative h-[300px] rounded-3xl p-6 md:p-12 text-white bg-epiclinx-semiteal overflow-hidden">

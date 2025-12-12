@@ -19,7 +19,7 @@ import { ActionMenu } from "@/components/ActionDropdown";
 import { FaSackDollar } from "react-icons/fa6";
 import { apiFetch } from "@/lib/api";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { EmptyState, LoadingState } from "@/components/loadingAndEmpty";
+import { EmptyState, LoadingState } from "@/components/LoadingAndNotFound";
 
 interface RequiredFieldJob {
   id: string;
